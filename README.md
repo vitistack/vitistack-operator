@@ -1,6 +1,6 @@
 # datacenter-operator
 
-API for centralizing data for datacenter infrastructure
+API for centralizing data for datacenter infrastructure.
 
 ## Prerequsites
 
