@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datacenter-config
+data:
+  # Required configuration keys for the datacenter-operator
+  name: "test-datacenter"
+  provider: "test-provider"
+  region: "test-region"
+  country: "test-country"

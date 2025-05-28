@@ -1,0 +1,7 @@
+apiVersion: vitistack.io/v1alpha1
+kind: KubernetesProvider
+metadata:
+  name: kubernetestestprovider
+spec:
+  config:
+    name: talos

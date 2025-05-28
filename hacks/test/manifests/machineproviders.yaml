@@ -1,0 +1,7 @@
+apiVersion: vitistack.io/v1alpha1
+kind: MachineProvider
+metadata:
+  name: machinetestprovider
+spec:
+  config:
+    name: kubevirt
