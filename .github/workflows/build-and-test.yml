@@ -24,8 +24,8 @@ jobs:
 
       - name: Configure Git for private repos
         run: |
-          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "git@github.com:"
+          git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}:@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}:@github.com/".insteadOf "git@github.com:"
         env:
           GOPRIVATE: github.com/vitistack/*
 
@@ -68,8 +68,8 @@ jobs:
 
       - name: Configure Git for private repos
         run: |
-          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "git@github.com:"
+          git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}:@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}:@github.com/".insteadOf "git@github.com:"
         env:
           GOPRIVATE: github.com/vitistack/*
 
@@ -120,8 +120,8 @@ jobs:
 
       - name: Configure Git for private repos
         run: |
-          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "git@github.com:"
+          git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}:@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}:@github.com/".insteadOf "git@github.com:"
         env:
           GOPRIVATE: github.com/vitistack/*
 
