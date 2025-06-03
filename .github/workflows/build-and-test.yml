@@ -26,10 +26,14 @@ jobs:
         run: |
           git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "https://github.com/"
           git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "git@github.com:"
+        env:
+          GOPRIVATE: github.com/vitistack/*
 
       - name: Install dependencies
         run: |
           go mod download
+        env:
+          GOPRIVATE: github.com/vitistack/*
 
       - name: Build
         run: |
@@ -66,6 +70,8 @@ jobs:
         run: |
           git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "https://github.com/"
           git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "git@github.com:"
+        env:
+          GOPRIVATE: github.com/vitistack/*
 
       - name: Restore build artifacts
         uses: actions/cache@v4
@@ -78,6 +84,8 @@ jobs:
       - name: Install dependencies
         run: |
           go mod download
+        env:
+          GOPRIVATE: github.com/vitistack/*
 
       - name: Setup test environment
         run: |
@@ -110,7 +118,22 @@ jobs:
           cache: true
           cache-dependency-path: go.sum
 
+      - name: Configure Git for private repos
+        run: |
+          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "git@github.com:"
+        env:
+          GOPRIVATE: github.com/vitistack/*
+
+      - name: Install dependencies
+        run: |
+          go mod download
+        env:
+          GOPRIVATE: github.com/vitistack/*
+
       - name: Run security scan
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
+        env:
+          GOPRIVATE: github.com/vitistack/*

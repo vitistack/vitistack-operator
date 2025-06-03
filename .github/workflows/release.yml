@@ -27,10 +27,14 @@ jobs:
         run: |
           git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "https://github.com/"
           git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "git@github.com:"
+        env:
+          GOPRIVATE: github.com/vitistack/*
 
       - name: Install dependencies
         run: |
           go mod download
+        env:
+          GOPRIVATE: github.com/vitistack/*
 
       - name: Build
         run: |
