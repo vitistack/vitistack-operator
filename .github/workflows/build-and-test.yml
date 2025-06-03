@@ -22,6 +22,11 @@ jobs:
           # This will cache both Go modules and build cache
           cache-dependency-path: go.sum
 
+      - name: Configure Git for private repos
+        run: |
+          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "git@github.com:"
+
       - name: Install dependencies
         run: |
           go mod download
@@ -56,6 +61,11 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+
+      - name: Configure Git for private repos
+        run: |
+          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:@github.com/".insteadOf "git@github.com:"
 
       - name: Restore build artifacts
         uses: actions/cache@v4
