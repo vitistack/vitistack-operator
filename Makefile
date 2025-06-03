@@ -195,7 +195,7 @@ token-kubernetes: check-kubectl ## Read the service account token from a pod in 
 		echo "${YELLOW}No pods found in namespace $(NAMESPACE). Creating namespace and temporary pod...${RESET}"; \
 		kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f - 2>/dev/null || true; \
 		echo "${GREEN}Creating temporary pod 'token-extractor' in namespace $(NAMESPACE)...${RESET}"; \
-		kubectl run token-extractor -n $(NAMESPACE) --image=busybox --restart=Never --command -- sleep 3600; \
+		kubectl run token-extractor -n $(NAMESPACE) --image=busybox --restart=Never --command -- sleep infinity; \
 		echo "${YELLOW}Waiting for pod to be ready...${RESET}"; \
 		kubectl wait --for=condition=Ready pod/token-extractor -n $(NAMESPACE) --timeout=60s; \
 		echo "${GREEN}>>> Reading token from temporary pod token-extractor in namespace $(NAMESPACE)...\n${RESET}"; \
