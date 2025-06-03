@@ -16,10 +16,10 @@ func GetMachineProviders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(machineProviders) == 0 {
-		httphelpers.RespondWithError(w, http.StatusNotFound, "No machine providers found")
-		return
-	}
+	// if len(machineProviders) == 0 {
+	// 	httphelpers.RespondWithError(w, http.StatusNotFound, "No machine providers found")
+	// 	return
+	// }
 
 	if err := httphelpers.RespondWithJSON(w, http.StatusOK, machineProviders); err != nil {
 		httphelpers.RespondWithError(w, http.StatusInternalServerError, "Failed to serialize machine providers")

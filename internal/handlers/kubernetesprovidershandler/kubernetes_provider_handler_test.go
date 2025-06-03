@@ -10,8 +10,8 @@ import (
 	"github.com/NorskHelsenett/oss-datacenter-operator/internal/cache"
 	"github.com/NorskHelsenett/oss-datacenter-operator/internal/handlers/kubernetesprovidershandler"
 	"github.com/NorskHelsenett/oss-datacenter-operator/internal/repositories"
-	"github.com/NorskHelsenett/oss-datacenter-operator/pkg/crds/v1alpha1"
 	"github.com/gorilla/mux"
+	"github.com/vitistack/crds/pkg/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

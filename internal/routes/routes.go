@@ -15,11 +15,9 @@ func SetupRoutes(r *mux.Router) {
 	r.Use(middlewares.ContentTypeMiddleware) // Add ContentTypeMiddleware for all routes
 
 	r.HandleFunc("/health", healthhandler.HealthCheck).Methods("GET")
+	r.HandleFunc("/v1/info/version", versionhandler.GetVersion).Methods("GET")
 
 	v1route := r.NewRoute().Subrouter().PathPrefix("/v1").Subrouter()
-
-	v1route.HandleFunc("/info/version", versionhandler.GetVersion).Methods("GET")
-
 	v1route.Use(middlewares.AuthMiddleware)
 	v1route.HandleFunc("/datacenter/name", datacenterhandler.GetName).Methods("GET")
 

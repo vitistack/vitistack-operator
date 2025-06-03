@@ -4,7 +4,7 @@ import (
 	"github.com/NorskHelsenett/oss-datacenter-operator/internal/repositories/kubernetesproviderrepository"
 	"github.com/NorskHelsenett/oss-datacenter-operator/internal/repositories/machineproviderrepository"
 	"github.com/NorskHelsenett/oss-datacenter-operator/internal/repositoryinterfaces"
-	"github.com/NorskHelsenett/oss-datacenter-operator/pkg/crds/v1alpha1"
+	"github.com/vitistack/crds/pkg/v1alpha1"
 )
 
 var (

@@ -8,8 +8,10 @@ DOCKER=docker
 KUBECTL=kubectl
 DOCKER_IMAGE=ghcr.io/vitistack/datacenter-operator
 DOCKER_TAG=latest
-MAIN_PATH=./cmd/api/main.go
-CONTROLLER-GEN=controller-gen
+MAIN_PATH=./cmd/datacenter-operator/main.go
+
+NAMESPACE=default
+POD ?= $(shell kubectl -n $(NAMESPACE) get pods -o jsonpath='{.items[0].metadata.name}')
 
 # Get the currently used golang version
 GO_VERSION=$(shell go version | sed -e 's/^[^0-9.]*\([0-9.]*\).*/\1/')
@@ -26,8 +28,6 @@ RESET  := $(shell tput -Txterm sgr0)
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-
-
 
 ##@ Prerequisites
 .PHONY: check-go check-docker check-kubectl check-prereqs
@@ -96,11 +96,13 @@ gosec: check-go ## Run gosec security scanner
 	@echo "${YELLOW}gosec completed.${RESET}"
 	
 ##@ Development
+.PHONY: run 
 run: check-go ## Run the application
 	@echo "${GREEN}Running ${BINARY_NAME}...${RESET}"
 	${GO} run ${MAIN_PATH}
 
 ##@ Docker
+.PHONY: docker-build docker-push
 docker-build: check-docker ## Build Docker image
 	@echo "${CYAN}Building Docker image...${RESET}"
 	${DOCKER} build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
@@ -110,39 +112,50 @@ docker-push: check-docker ## Push Docker image
 	${DOCKER} push ${DOCKER_IMAGE}:${DOCKER_TAG}
 
 ##@ CRDs & Resources
-generate-crds: check-go ## Generate CRDs and copy to Helm chart
-	@echo "${GREEN}Generating CRDs...${RESET}"
-	${CONTROLLER-GEN} object:headerFile="hacks/boilerplate.go.txt" paths="./pkg/crds/..."
-	${CONTROLLER-GEN} crd paths=./pkg/crds/... output:crd:artifacts:config=hacks/crds
-	@echo "${GREEN}Copying CRDs to Helm chart...${RESET}"
-	@mkdir -p charts/datacenter-operator/crds
-	@cp hacks/crds/*.yaml charts/datacenter-operator/crds/
-
+.PHONY: install-configmap uninstall-configmap install-crds download-crds uninstall
 install-configmap: check-kubectl ## Install configmap into cluster
 	@echo "${GREEN}Installing configmap into cluster...${RESET}"
-	${KUBECTL} apply -f hacks/test/manifests/configmap.yaml
+	${KUBECTL} apply -f hack/test/manifests/configmap.yaml
 
 uninstall-configmap: check-kubectl ## Uninstall configmap into cluster
 	@echo "${GREEN}Installing configmap into cluster...${RESET}"
-	${KUBECTL} delete -f hacks/test/manifests/configmap.yaml
+	${KUBECTL} delete -f hack/test/manifests/configmap.yaml
 
 install-crds: check-kubectl ## Install CRDs into a cluster
 	@echo "${GREEN}Installing CRDs...${RESET}"
-	${KUBECTL} apply -f hacks/crds/
+	${KUBECTL} apply -f hack/crds/
+
+download-crds: ## Download CRDs from private repository (requires GITHUB_TOKEN)
+	@echo "${GREEN}Downloading CRDs from private repository...${RESET}"
+	@if [ -z "$$GITHUB_TOKEN" ]; then \
+		echo "${RED}Error: GITHUB_TOKEN environment variable is required for private repository access${RESET}"; \
+		exit 1; \
+	fi
+	@mkdir -p hack/crds
+	@curl -H "Authorization: token $$GITHUB_TOKEN" \
+		-H "Accept: application/vnd.github.v3.raw" \
+		-o hack/crds/vitistack.io_datacenters.yaml \
+		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_datacenters.yaml
+	@curl -H "Authorization: token $$GITHUB_TOKEN" \
+		-H "Accept: application/vnd.github.v3.raw" \
+		-o hack/crds/vitistack.io_kubernetesproviders.yaml \
+		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_kubernetesproviders.yaml
+	@curl -H "Authorization: token $$GITHUB_TOKEN" \
+		-H "Accept: application/vnd.github.v3.raw" \
+		-o hack/crds/vitistack.io_machineproviders.yaml \
+		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_machineproviders.yaml
+	@echo "${GREEN}CRDs downloaded successfully${RESET}"
 
 uninstall-crds: check-kubectl ## Uninstall CRDs into a cluster
-	@echo "${GREEN}Installing CRDs...${RESET}"
-	${KUBECTL} delete -f hacks/crds/
-
-install-crds-from-chart: check-kubectl ## Install CRDs from Helm chart
-	@echo "${GREEN}Installing CRDs from Helm chart...${RESET}"
-	${KUBECTL} apply -f charts/datacenter-operator/crds/
+	@echo "${RED}Uninstalling CRDs...${RESET}"
+	${KUBECTL} delete -f hack/crds/
 
 install-test-manifests: check-kubectl ## Install test resources (KubernetesProviders and MachineProviders)
 	@echo "${GREEN}Installing test resources (KubernetesProviders and MachineProviders...)${RESET}"
-	${KUBECTL} apply -f hacks/test/manifests/
+	${KUBECTL} apply -f hack/test/manifests/
 
 ##@ Installation
+.PHONY: install-lint install-gosec helm-install
 install-lint: ## Install golangci-lint
 	@echo "${YELLOW}Installing golangci-lint...${RESET}"
 	${GO} install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
@@ -158,6 +171,7 @@ helm-install: check-kubectl ## Install Helm chart with CRDs
 	helm upgrade --install datacenter-operator ./charts/datacenter-operator --namespace default
 
 ##@ Dependencies
+.PHONY: deps update-deps
 deps: ## Download and verify dependencies
 	@echo "Downloading dependencies..."
 	@go mod download
@@ -170,3 +184,29 @@ update-deps: ## Update dependencies
 	@go get -u ./...
 	@go mod tidy
 	@echo "Dependencies updated!"
+
+##@ Kubernetes
+.PHONY: token-kubernetes token-kubernetes-cleanup
+
+token-kubernetes: check-kubectl ## Read the service account token from a pod in the specified namespace, specified by NAMESPACE variable (ex: make token-kubernetes NAMESPACE=default)
+	@echo "${YELLOW}>>> Checking for pods in namespace $(NAMESPACE)...${RESET}"
+	@POD_COUNT=$$(kubectl get pods -n $(NAMESPACE) --no-headers 2>/dev/null | wc -l | tr -d ' '); \
+	if [ "$$POD_COUNT" -eq 0 ]; then \
+		echo "${YELLOW}No pods found in namespace $(NAMESPACE). Creating namespace and temporary pod...${RESET}"; \
+		kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f - 2>/dev/null || true; \
+		echo "${GREEN}Creating temporary pod 'token-extractor' in namespace $(NAMESPACE)...${RESET}"; \
+		kubectl run token-extractor -n $(NAMESPACE) --image=busybox --restart=Never --command -- sleep 3600; \
+		echo "${YELLOW}Waiting for pod to be ready...${RESET}"; \
+		kubectl wait --for=condition=Ready pod/token-extractor -n $(NAMESPACE) --timeout=60s; \
+		echo "${GREEN}>>> Reading token from temporary pod token-extractor in namespace $(NAMESPACE)...\n${RESET}"; \
+		kubectl -n $(NAMESPACE) exec token-extractor -- cat /var/run/secrets/kubernetes.io/serviceaccount/token; \
+	else \
+		FIRST_POD=$$(kubectl get pods -n $(NAMESPACE) --no-headers -o custom-columns=":metadata.name" | head -n 1); \
+		echo "${GREEN}>>> Reading token from existing pod $$FIRST_POD in namespace $(NAMESPACE)...${RESET}"; \
+		kubectl -n $(NAMESPACE) exec $$FIRST_POD -- cat /var/run/secrets/kubernetes.io/serviceaccount/token; \
+	fi
+
+token-kubernetes-cleanup: check-kubectl ## Cleanup temporary pod created by token-kubernetes
+	@echo "${YELLOW}>>> Cleaning up temporary pod token-extractor in namespace $(NAMESPACE)...${RESET}"
+	@kubectl delete pod token-extractor -n $(NAMESPACE) --ignore-not-found
+	@echo "${GREEN}Temporary pod cleaned up.${RESET}"

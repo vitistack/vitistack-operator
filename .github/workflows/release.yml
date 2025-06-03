@@ -25,15 +25,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          go get ./...
-          go get -t ./...
-          go vet ./...
+          go mod download
 
       - name: Build
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v*}"
           echo "Version $VERSION"
+          make build-static
           touch cmd/isbuilt
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 

@@ -6,7 +6,8 @@ import (
 
 	"github.com/NorskHelsenett/oss-datacenter-operator/internal/cache"
 	"github.com/NorskHelsenett/oss-datacenter-operator/internal/repositoryinterfaces"
-	"github.com/NorskHelsenett/oss-datacenter-operator/pkg/crds/v1alpha1"
+
+	"github.com/vitistack/crds/pkg/v1alpha1"
 )
 
 // MachineProviderRepository interface defines operations for Machine providers

@@ -47,11 +47,6 @@ func GetKubernetesProviders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(kps) == 0 {
-		httphelpers.RespondWithError(w, http.StatusNotFound, "No Kubernetes providers found")
-		return
-	}
-
 	if err := httphelpers.RespondWithJSON(w, http.StatusOK, kps); err != nil {
 		httphelpers.RespondWithError(w, http.StatusInternalServerError, "Failed to serialize Kubernetes providers")
 		return
