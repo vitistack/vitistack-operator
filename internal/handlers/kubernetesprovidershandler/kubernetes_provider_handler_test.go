@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/cache"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/handlers/kubernetesprovidershandler"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/repositories"
 	"github.com/gorilla/mux"
 	"github.com/vitistack/crds/pkg/v1alpha1"
+	"github.com/vitistack/datacenter-operator/internal/cache"
+	"github.com/vitistack/datacenter-operator/internal/handlers/kubernetesprovidershandler"
+	"github.com/vitistack/datacenter-operator/internal/repositories"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

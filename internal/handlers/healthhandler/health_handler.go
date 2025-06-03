@@ -3,7 +3,7 @@ package healthhandler
 import (
 	"net/http"
 
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/helpers/httphelpers"
+	"github.com/vitistack/datacenter-operator/internal/helpers/httphelpers"
 )
 
 func HealthCheck(w http.ResponseWriter, r *http.Request) {

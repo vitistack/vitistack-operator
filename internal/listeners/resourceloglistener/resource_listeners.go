@@ -1,8 +1,8 @@
 package resourceloglistener
 
 import (
-	"github.com/NorskHelsenett/oss-datacenter-operator/pkg/eventmanager"
 	"github.com/NorskHelsenett/ror/pkg/rlog"
+	"github.com/vitistack/datacenter-operator/pkg/eventmanager"
 )
 
 // RegisterListeners registers all resource event listeners with the event bus

@@ -3,8 +3,8 @@ package datacenterhandler
 import (
 	"net/http"
 
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/helpers/httphelpers"
-	nameservice "github.com/NorskHelsenett/oss-datacenter-operator/internal/services/datacenternameservice"
+	"github.com/vitistack/datacenter-operator/internal/helpers/httphelpers"
+	nameservice "github.com/vitistack/datacenter-operator/internal/services/datacenternameservice"
 )
 
 func GetName(w http.ResponseWriter, r *http.Request) {

@@ -1,8 +1,8 @@
 package settings
 
 import (
-	"github.com/NorskHelsenett/oss-datacenter-operator/pkg/consts"
 	"github.com/spf13/viper"
+	"github.com/vitistack/datacenter-operator/pkg/consts"
 )
 
 var (

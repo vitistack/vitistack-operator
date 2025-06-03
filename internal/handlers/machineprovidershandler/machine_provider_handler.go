@@ -3,10 +3,10 @@ package machineprovidershandler
 import (
 	"net/http"
 
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/helpers/httphelpers"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/helpers/uuidhelpers"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/repositories"
 	"github.com/gorilla/mux"
+	"github.com/vitistack/datacenter-operator/internal/helpers/httphelpers"
+	"github.com/vitistack/datacenter-operator/internal/helpers/uuidhelpers"
+	"github.com/vitistack/datacenter-operator/internal/repositories"
 )
 
 func GetMachineProviders(w http.ResponseWriter, r *http.Request) {

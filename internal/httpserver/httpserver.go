@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/routes"
-	"github.com/NorskHelsenett/oss-datacenter-operator/pkg/consts"
 	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
+	"github.com/vitistack/datacenter-operator/internal/routes"
+	"github.com/vitistack/datacenter-operator/pkg/consts"
 )
 
 func Start() {

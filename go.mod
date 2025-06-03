@@ -1,4 +1,4 @@
-module github.com/NorskHelsenett/oss-datacenter-operator
+module github.com/vitistack/datacenter-operator
 
 go 1.24.3
 

@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/cache"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/clients"
-	"github.com/NorskHelsenett/oss-datacenter-operator/pkg/consts"
 	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/spf13/viper"
+	"github.com/vitistack/datacenter-operator/internal/cache"
+	"github.com/vitistack/datacenter-operator/internal/clients"
+	"github.com/vitistack/datacenter-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

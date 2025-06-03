@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/handlers/datacenterhandler"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/handlers/healthhandler"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/handlers/kubernetesprovidershandler"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/handlers/machineprovidershandler"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/handlers/versionhandler"
-	"github.com/NorskHelsenett/oss-datacenter-operator/internal/middlewares"
 	"github.com/gorilla/mux"
+	"github.com/vitistack/datacenter-operator/internal/handlers/datacenterhandler"
+	"github.com/vitistack/datacenter-operator/internal/handlers/healthhandler"
+	"github.com/vitistack/datacenter-operator/internal/handlers/kubernetesprovidershandler"
+	"github.com/vitistack/datacenter-operator/internal/handlers/machineprovidershandler"
+	"github.com/vitistack/datacenter-operator/internal/handlers/versionhandler"
+	"github.com/vitistack/datacenter-operator/internal/middlewares"
 )
 
 func SetupRoutes(r *mux.Router) {
