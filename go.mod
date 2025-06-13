@@ -1,12 +1,17 @@
 module github.com/vitistack/datacenter-operator
 
-go 1.24.3
+go 1.24.4
 
 require (
-	github.com/NorskHelsenett/ror v1.1.4
-	github.com/vitistack/crds v0.0.1-alpha09
+	github.com/NorskHelsenett/ror v1.2.0-rc12
+	github.com/vitistack/crds v0.0.1-alpha10
 	k8s.io/apimachinery v0.33.1
 	k8s.io/client-go v0.33.1
+)
+
+require (
+	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
+	go.mongodb.org/mongo-driver v1.17.4 // indirect
 )
 
 require (
@@ -77,7 +82,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.33.1
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
+	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
