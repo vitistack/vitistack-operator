@@ -144,6 +144,14 @@ download-crds: ## Download CRDs from private repository (requires GITHUB_TOKEN)
 		-H "Accept: application/vnd.github.v3.raw" \
 		-o hack/crds/vitistack.io_machineproviders.yaml \
 		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_machineproviders.yaml
+	@curl -H "Authorization: token $$GITHUB_TOKEN" \
+		-H "Accept: application/vnd.github.v3.raw" \
+		-o hack/crds/vitistack.io_machines.yaml \
+		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_machines.yaml
+	@curl -H "Authorization: token $$GITHUB_TOKEN" \
+		-H "Accept: application/vnd.github.v3.raw" \
+		-o hack/crds/vitistack.io_kubernetesclusters.yaml \
+		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_kubernetesclusters.yaml
 	@echo "${GREEN}CRDs downloaded successfully${RESET}"
 
 uninstall-crds: check-kubectl ## Uninstall CRDs into a cluster
