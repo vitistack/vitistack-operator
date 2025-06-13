@@ -49,10 +49,10 @@ func handleMachineProviderEvents(event eventmanager.ResourceEvent) {
 }
 
 func handleConfigMapEvents(event eventmanager.ResourceEvent) {
-	updateDatacenterName(event)
+	updateDatacenter(event)
 }
 
-func updateDatacenterName(event eventmanager.ResourceEvent) {
+func updateDatacenter(event eventmanager.ResourceEvent) {
 	if event.Resource.Object == nil {
 		rlog.Error("Resource object is nil", nil)
 		return
@@ -79,6 +79,9 @@ func updateDatacenterName(event eventmanager.ResourceEvent) {
 	namespace := viper.GetString(consts.NAMESPACE)
 	datacenterCrdName := viper.GetString(consts.DATACENTERCRDNAME)
 
+	region := viper.GetString(consts.REGION)
+	location := viper.GetString(consts.LOCATION)
+
 	// get the current datacenter object
 	datacenterRWMutex.RLock()
 	datacenterObj, err := clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Get(context.TODO(), datacenterCrdName, metav1.GetOptions{})
@@ -97,13 +100,26 @@ func updateDatacenterName(event eventmanager.ResourceEvent) {
 	}
 
 	// Update the name in the datacenter object
-	err = unstructured.SetNestedField(datacenterObj.Object, datacenterName, "spec", "name")
+	err = unstructured.SetNestedField(datacenterObj.Object, datacenterName, "spec", "displayName")
 	if err != nil {
 		rlog.Error("Failed to set Datacenter name", err,
 			rlog.String("name", event.Resource.GetName()),
 			rlog.String("namespace", event.Resource.GetNamespace()))
 		return
 	}
+
+	err = unstructured.SetNestedField(datacenterObj.Object, region, "spec", "region")
+	if err != nil {
+		rlog.Error("Failed to set Datacenter region", err)
+		return
+	}
+
+	err = unstructured.SetNestedField(datacenterObj.Object, location, "spec", "location")
+	if err != nil {
+		rlog.Error("Failed to set Datacenter location", err)
+		return
+	}
+
 	// Update the datacenter object
 	_, err = clients.DynamicClient.Resource(datacenterGVR).Namespace(event.Resource.GetNamespace()).Update(context.TODO(), datacenterObj, metav1.UpdateOptions{})
 

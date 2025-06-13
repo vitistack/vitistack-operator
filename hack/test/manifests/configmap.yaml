@@ -7,4 +7,4 @@ data:
   name: "test-datacenter"
   provider: "test-provider"
   region: "test-region"
-  country: "test-country"
+  location: "test-country"

@@ -38,7 +38,7 @@ func CheckConfigmap() {
 
 		// Verify that the ConfigMap contains required keys
 		// Add your specific key checks here based on what your application needs
-		requiredKeys := []string{"name", "provider", "region", "country"} // Example required keys
+		requiredKeys := []string{"name", "provider", "region", "location"} // Example required keys
 		for _, key := range requiredKeys {
 			if _, exists := configMap.Data[key]; !exists {
 				errors = append(errors, fmt.Sprintf("ConfigMap '%s' is missing required key: %s", configMapName, key))

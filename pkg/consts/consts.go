@@ -5,4 +5,6 @@ var (
 	CONFIGMAPNAME     = "CONFIGMAPNAME"
 	NAMESPACE         = "NAMESPACE"
 	DEVELOPMENT       = "DEVELOPMENT"
+	REGION            = "REGION"
+	LOCATION          = "LOCATION"
 )
