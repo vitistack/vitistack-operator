@@ -75,7 +75,7 @@ func CheckCRDs() {
 		// Check if all required CRDs are installed
 		resources, err := kubernetesclient.Discovery().ServerResourcesForGroupVersion("vitistack.io/v1alpha1")
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("CRDs are not installed properly: %s", err.Error()))
+			errors = append(errors, fmt.Sprintf("Vitistack CRDs are not installed properly: %s", err.Error()))
 		} else if len(resources.APIResources) == 0 {
 			errors = append(errors, "No resources found for the required CRDs")
 		} else {
