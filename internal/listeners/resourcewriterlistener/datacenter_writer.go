@@ -76,7 +76,6 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 		return
 	}
 
-	namespace := viper.GetString(consts.NAMESPACE)
 	datacenterCrdName := viper.GetString(consts.DATACENTERCRDNAME)
 
 	region := viper.GetString(consts.REGION)
@@ -84,12 +83,12 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 
 	// get the current datacenter object
 	datacenterRWMutex.RLock()
-	datacenterObj, err := clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Get(context.TODO(), datacenterCrdName, metav1.GetOptions{})
+	datacenterObj, err := clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterCrdName, metav1.GetOptions{})
 	datacenterRWMutex.RUnlock()
 	if err != nil {
 
 		// If the datacenter doesn't exist, we need to create it
-		_, err = getOrCreateDatacenterCrd(datacenterCrdName, namespace, "", "")
+		_, err = getOrCreateDatacenterCrd(datacenterCrdName, "", "")
 		if err != nil {
 			rlog.Error("Failed to get or create Datacenter CRD", err,
 				rlog.String("name", event.Resource.GetName()),
@@ -121,7 +120,7 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 	}
 
 	// Update the datacenter object
-	_, err = clients.DynamicClient.Resource(datacenterGVR).Namespace(event.Resource.GetNamespace()).Update(context.TODO(), datacenterObj, metav1.UpdateOptions{})
+	_, err = clients.DynamicClient.Resource(datacenterGVR).Update(context.TODO(), datacenterObj, metav1.UpdateOptions{})
 
 	if err != nil {
 		rlog.Error("Failed to update Datacenter CRD", err,
@@ -155,30 +154,29 @@ func updateDatacenterWithProvider(event eventmanager.ResourceEvent, providerType
 
 	// Get or create the datacenter CRD
 	datacenterCrdName := viper.GetString(consts.DATACENTERCRDNAME)
-	datacenterObj, err := getOrCreateDatacenterCrd(datacenterCrdName, namespace, providerName, providerType)
+	datacenterObj, err := getOrCreateDatacenterCrd(datacenterCrdName, providerName, providerType)
 	if err != nil {
 		rlog.Error("Failed to get or create Datacenter CRD", err,
-			rlog.String("name", datacenterCrdName),
-			rlog.String("namespace", namespace))
+			rlog.String("name", datacenterCrdName))
 		return
 	}
 
 	// Handle based on event type
 	switch event.Type {
 	case eventmanager.EventAdd, eventmanager.EventUpdate:
-		addProviderToDatacenter(datacenterObj, providerName, providerType, namespace)
+		addProviderToDatacenter(datacenterObj, providerName, providerType)
 	case eventmanager.EventDelete:
-		removeProviderFromDatacenter(datacenterObj, providerName, providerType, namespace)
+		removeProviderFromDatacenter(datacenterObj, providerName, providerType)
 	default:
 		rlog.Info("Unhandled event type", rlog.String("type", string(event.Type)))
 	}
 }
 
 // getOrCreateDatacenterCrd tries to get an existing datacenter CRD or creates a new one if it doesn't exist
-func getOrCreateDatacenterCrd(name, namespace, providerName, providerType string) (*unstructured.Unstructured, error) {
+func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstructured.Unstructured, error) {
 	// Use a read lock first since we're just checking if the datacenter exists
 	datacenterRWMutex.RLock()
-	datacenterObj, err := clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	datacenterObj, err := clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), name, metav1.GetOptions{})
 	datacenterRWMutex.RUnlock()
 
 	if err == nil {
@@ -196,7 +194,7 @@ func getOrCreateDatacenterCrd(name, namespace, providerName, providerType string
 	defer datacenterRWMutex.Unlock()
 
 	// Check again in case another goroutine created the datacenter while we were waiting for the lock
-	datacenterObj, err = clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	datacenterObj, err = clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), name, metav1.GetOptions{})
 	if err == nil {
 		return datacenterObj, nil
 	}
@@ -218,42 +216,40 @@ func getOrCreateDatacenterCrd(name, namespace, providerName, providerType string
 			"apiVersion": "vitistack.io/v1alpha1",
 			"kind":       "Datacenter",
 			"metadata": map[string]any{
-				"name":      name,
-				"namespace": namespace,
+				"name": name,
 			},
 			"spec": map[string]any{
-				"name":                datacenterName,
 				"kubernetesProviders": kubernetesProviders,
 				"machineProviders":    machineProviders,
+				"region":              viper.GetString(consts.LOCATION),
+				"displayName":         datacenterName,
 			},
 		},
 	}
 
-	createdObj, err := clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Create(context.TODO(), datacenter, metav1.CreateOptions{})
+	createdObj, err := clients.DynamicClient.Resource(datacenterGVR).Create(context.TODO(), datacenter, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	rlog.Info("Created new Datacenter CRD",
-		rlog.String("name", name),
-		rlog.String("namespace", namespace))
+		rlog.String("name", name))
 
 	return createdObj, nil
 }
 
 // addProviderToDatacenter adds a provider to the specified provider list if it doesn't already exist
-func addProviderToDatacenter(datacenterObj *unstructured.Unstructured, providerName, providerType, namespace string) {
+func addProviderToDatacenter(datacenterObj *unstructured.Unstructured, providerName, providerType string) {
 	datacenterName := datacenterObj.GetName()
 
 	// First, use a read lock to check if the provider already exists
 	datacenterRWMutex.RLock()
 	// Get the latest version of the datacenter object
-	latestObj, err := clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Get(context.TODO(), datacenterName, metav1.GetOptions{})
+	latestObj, err := clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterName, metav1.GetOptions{})
 	if err != nil {
 		datacenterRWMutex.RUnlock()
 		rlog.Error("Failed to get Datacenter CRD", err,
-			rlog.String("name", datacenterName),
-			rlog.String("namespace", namespace))
+			rlog.String("name", datacenterName))
 		return
 	}
 
@@ -290,11 +286,10 @@ func addProviderToDatacenter(datacenterObj *unstructured.Unstructured, providerN
 
 	// Get the latest version again after acquiring the write lock
 	// This ensures we're working with current data even if it changed while we were waiting for the lock
-	latestObj, err = clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Get(context.TODO(), datacenterName, metav1.GetOptions{})
+	latestObj, err = clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterName, metav1.GetOptions{})
 	if err != nil {
 		rlog.Error("Failed to get updated Datacenter CRD", err,
-			rlog.String("name", datacenterName),
-			rlog.String("namespace", namespace))
+			rlog.String("name", datacenterName))
 		return
 	}
 
@@ -324,11 +319,10 @@ func addProviderToDatacenter(datacenterObj *unstructured.Unstructured, providerN
 		}
 
 		// Update the datacenter resource
-		_, err = clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
+		_, err = clients.DynamicClient.Resource(datacenterGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
 		if err != nil {
 			rlog.Error("Failed to update Datacenter CRD", err,
-				rlog.String("name", datacenterName),
-				rlog.String("namespace", namespace))
+				rlog.String("name", datacenterName))
 			return
 		}
 
@@ -345,18 +339,17 @@ func addProviderToDatacenter(datacenterObj *unstructured.Unstructured, providerN
 }
 
 // removeProviderFromDatacenter removes a provider from the specified provider list
-func removeProviderFromDatacenter(datacenterObj *unstructured.Unstructured, providerName, providerType, namespace string) {
+func removeProviderFromDatacenter(datacenterObj *unstructured.Unstructured, providerName, providerType string) {
 	datacenterName := datacenterObj.GetName()
 
 	// First, use a read lock to check if the provider exists
 	datacenterRWMutex.RLock()
 	// Get the latest version of the datacenter object
-	latestObj, err := clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Get(context.TODO(), datacenterName, metav1.GetOptions{})
+	latestObj, err := clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterName, metav1.GetOptions{})
 	if err != nil {
 		datacenterRWMutex.RUnlock()
 		rlog.Error("Failed to get Datacenter CRD", err,
-			rlog.String("name", datacenterName),
-			rlog.String("namespace", namespace))
+			rlog.String("name", datacenterName))
 		return
 	}
 
@@ -405,11 +398,10 @@ func removeProviderFromDatacenter(datacenterObj *unstructured.Unstructured, prov
 	defer datacenterRWMutex.Unlock()
 
 	// Get the latest version again after acquiring the write lock
-	latestObj, err = clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Get(context.TODO(), datacenterName, metav1.GetOptions{})
+	latestObj, err = clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterName, metav1.GetOptions{})
 	if err != nil {
 		rlog.Error("Failed to get updated Datacenter CRD", err,
-			rlog.String("name", datacenterName),
-			rlog.String("namespace", namespace))
+			rlog.String("name", datacenterName))
 		return
 	}
 
@@ -450,11 +442,10 @@ func removeProviderFromDatacenter(datacenterObj *unstructured.Unstructured, prov
 		}
 
 		// Update the datacenter resource
-		_, err = clients.DynamicClient.Resource(datacenterGVR).Namespace(namespace).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
+		_, err = clients.DynamicClient.Resource(datacenterGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
 		if err != nil {
 			rlog.Error("Failed to update Datacenter CRD after removal", err,
-				rlog.String("name", datacenterName),
-				rlog.String("namespace", namespace))
+				rlog.String("name", datacenterName))
 			return
 		}
 

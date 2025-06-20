@@ -15,7 +15,7 @@ import (
 )
 
 // Required fields in the configmap that must be present
-var requiredConfigMapFields = []string{"name", "country"}
+var requiredConfigMapFields = []string{"name", "location"}
 
 func GetName(ctx context.Context) (string, error) {
 	configMapName := viper.GetString(consts.CONFIGMAPNAME)
