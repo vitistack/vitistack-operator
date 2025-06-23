@@ -16,6 +16,8 @@ func Init() {
 	viper.SetDefault(consts.CONFIGMAPNAME, "datacenter-config")
 	viper.SetDefault(consts.NAMESPACE, "default")
 	viper.SetDefault(consts.DEVELOPMENT, false)
+	viper.SetDefault(consts.REGION, "Norway")
+	viper.SetDefault(consts.LOCATION, "Trøndelag")
 
 	viper.AutomaticEnv()
 }

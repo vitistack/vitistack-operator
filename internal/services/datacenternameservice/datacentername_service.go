@@ -21,21 +21,55 @@ func GetName(ctx context.Context) (string, error) {
 	configMapName := viper.GetString(consts.CONFIGMAPNAME)
 	namespace := viper.GetString(consts.NAMESPACE)
 
+	rlog.Info("Getting datacenter name",
+		rlog.String("configMapName", configMapName),
+		rlog.String("namespace", namespace))
+
 	// Try to get from cache first
 	configData, err := getConfigDataFromCache(ctx, namespace, configMapName)
 	if err == nil {
+		rlog.Info("Retrieved ConfigMap data from cache",
+			rlog.String("name", configData["name"]))
 		// If cache is valid, return the data
 		return configData["name"], nil
 	}
 
-	// If cache fails, get from Kubernetes API
+	rlog.Info("Cache miss or error, falling back to Kubernetes API", rlog.Any("error", err))
+
+	// If cache fails, get from Kubernetes API and update cache
 	configData, err = getConfigDataFromK8s(ctx, namespace, configMapName)
 	if err != nil {
 		return "", fmt.Errorf("failed to get config data: %w", err)
 	}
 
-	return configData["name"], nil
+	rlog.Info("Retrieved ConfigMap data from Kubernetes API",
+		rlog.String("name", configData["name"]))
 
+	// Update cache with fresh data from Kubernetes API
+	cacheKey := buildCacheKey(namespace, configMapName)
+	configMap, err := getConfigMapFromK8s(ctx, namespace, configMapName)
+	if err == nil && configMap != nil {
+		err = cache.Cache.Set(ctx, cacheKey, configMap)
+		if err != nil {
+			rlog.Error("Failed to update cache with fresh ConfigMap data:", err)
+		} else {
+			rlog.Info("Updated cache with fresh ConfigMap data")
+		}
+	}
+
+	return configData["name"], nil
+}
+
+// InvalidateCache removes the ConfigMap from cache to force fresh data retrieval
+func InvalidateCache(ctx context.Context, namespace, name string) error {
+	cacheKey := buildCacheKey(namespace, name)
+	err := cache.Cache.Delete(ctx, cacheKey)
+	if err != nil {
+		rlog.Error("Failed to invalidate cache:", err)
+		return err
+	}
+	rlog.Info("Cache invalidated successfully", rlog.String("key", cacheKey))
+	return nil
 }
 
 // buildCacheKey creates a standardized cache key for config maps

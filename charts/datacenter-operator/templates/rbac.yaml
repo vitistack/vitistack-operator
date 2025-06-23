@@ -1,0 +1,33 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "datacenter-operator.fullname" . }}
+  labels:
+    {{- include "datacenter-operator.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["vitistack.io"]
+  resources: ["kubernetesproviders", "machineproviders", "datacenters", "kubernetesclusters", "machines"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["vitistack.io"]
+  resources: ["kubernetesproviders/status", "machineproviders/status", "datacenters/status", "kubernetesclusters/status", "machines/status"]
+  verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "datacenter-operator.fullname" . }}
+  labels:
+    {{- include "datacenter-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "datacenter-operator.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "datacenter-operator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

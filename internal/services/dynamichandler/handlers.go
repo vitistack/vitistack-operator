@@ -21,7 +21,10 @@ func NewDynamicClientHandler() dynamicclienthandler.DynamicClientHandler {
 
 func (handler) AddResource(obj any) {
 	unstructuredObject := obj.(*unstructured.Unstructured)
-	rlog.Info(fmt.Sprintf("Add Resource, name: %s, kind: %s", unstructuredObject.GetName(), unstructuredObject.GetKind()))
+	rlog.Info(fmt.Sprintf("AddResource called - name: %s, kind: %s, namespace: %s",
+		unstructuredObject.GetName(),
+		unstructuredObject.GetKind(),
+		unstructuredObject.GetNamespace()))
 
 	// Determine cache key based on resource kind
 	cacheKey := string(unstructuredObject.GetUID())
@@ -45,6 +48,10 @@ func (handler) AddResource(obj any) {
 		Type:     eventmanager.EventAdd,
 		Resource: unstructuredObject,
 	})
+
+	rlog.Info("Published add event for resource",
+		rlog.String("name", unstructuredObject.GetName()),
+		rlog.String("kind", unstructuredObject.GetKind()))
 }
 
 func (handler) DeleteResource(obj any) {
@@ -77,7 +84,10 @@ func (handler) DeleteResource(obj any) {
 
 func (handler) UpdateResource(_ any, obj any) {
 	unstructuredObject := obj.(*unstructured.Unstructured)
-	rlog.Info(fmt.Sprintf("Update Resource, name: %s, kind: %s", unstructuredObject.GetName(), unstructuredObject.GetKind()))
+	rlog.Info(fmt.Sprintf("UpdateResource called - name: %s, kind: %s, namespace: %s",
+		unstructuredObject.GetName(),
+		unstructuredObject.GetKind(),
+		unstructuredObject.GetNamespace()))
 
 	// Determine cache key based on resource kind
 	cacheKey := string(unstructuredObject.GetUID())
@@ -96,9 +106,21 @@ func (handler) UpdateResource(_ any, obj any) {
 	}
 	rlog.Info("Cache updated successfully")
 
+	// Additional logging for ConfigMap updates
+	if unstructuredObject.GetKind() == "ConfigMap" {
+		rlog.Info("ConfigMap updated in cache",
+			rlog.String("name", unstructuredObject.GetName()),
+			rlog.String("namespace", unstructuredObject.GetNamespace()),
+			rlog.String("cacheKey", cacheKey))
+	}
+
 	// Publish event to notify subscribers
 	eventmanager.EventBus.Publish(eventmanager.ResourceEvent{
 		Type:     eventmanager.EventUpdate,
 		Resource: unstructuredObject,
 	})
+
+	rlog.Info("Published update event for resource",
+		rlog.String("name", unstructuredObject.GetName()),
+		rlog.String("kind", unstructuredObject.GetKind()))
 }

@@ -40,6 +40,19 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DATACENTERCRDNAME
+              value: {{ .Values.config.datacenterCrdName | default "datacenter" | quote }}
+            - name: CONFIGMAPNAME
+              value: {{ .Values.config.configMapName | default "datacenter-config" | quote }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: DEVELOPMENT
+              value: {{ .Values.config.development | default false | quote }}
+            - name: REGION
+              value: {{ .Values.config.region | default "Norway" | quote }}
+            - name: LOCATION
+              value: {{ .Values.config.location | default "Trøndelag" | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

@@ -17,15 +17,21 @@ helm install datacenter-operator ./charts/datacenter-operator
 
 The following table lists the configurable parameters for the Datacenter Operator chart and their default values.
 
-| Parameter               | Description                                           | Default                                  |
-| ----------------------- | ----------------------------------------------------- | ---------------------------------------- |
-| `crds.install`          | Whether to install the CRDs during chart installation | `true`                                   |
-| `replicaCount`          | Number of replicas to deploy                          | `1`                                      |
-| `image.repository`      | Image repository                                      | `ncr.sky.nhn.no/nhn/datacenter-operator` |
-| `image.pullPolicy`      | Image pull policy                                     | `IfNotPresent`                           |
-| `image.tag`             | Image tag                                             | Chart's appVersion                       |
-| `serviceAccount.create` | Whether to create a service account                   | `true`                                   |
-| `serviceAccount.name`   | Name of the service account                           | Generated using the fullname template    |
+| Parameter                  | Description                                           | Default                                  |
+| -------------------------- | ----------------------------------------------------- | ---------------------------------------- |
+| `crds.install`             | Whether to install the CRDs during chart installation | `true`                                   |
+| `replicaCount`             | Number of replicas to deploy                          | `1`                                      |
+| `image.repository`         | Image repository                                      | `ncr.sky.nhn.no/nhn/datacenter-operator` |
+| `image.pullPolicy`         | Image pull policy                                     | `IfNotPresent`                           |
+| `image.tag`                | Image tag                                             | Chart's appVersion                       |
+| `serviceAccount.create`    | Whether to create a service account                   | `true`                                   |
+| `serviceAccount.name`      | Name of the service account                           | Generated using the fullname template    |
+| `rbac.create`              | Whether to create RBAC resources                      | `true`                                   |
+| `config.datacenterCrdName` | Name of the datacenter CRD to manage                  | `datacenter`                             |
+| `config.configMapName`     | Name of the ConfigMap to watch for datacenter config  | `datacenter-config`                      |
+| `config.development`       | Enable development mode                               | `false`                                  |
+| `config.region`            | Default region for datacenters                        | `Norway`                                 |
+| `config.location`          | Default location for datacenters                      | `Trøndelag`                              |
 
 ## CRDs
 

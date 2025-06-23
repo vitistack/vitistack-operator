@@ -8,3 +8,4 @@ data:
   provider: "test-provider"
   region: "test-region"
   location: "test-country"
+  description: "Test datacenter"

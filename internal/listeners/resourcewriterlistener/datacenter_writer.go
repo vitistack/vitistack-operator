@@ -49,6 +49,23 @@ func handleMachineProviderEvents(event eventmanager.ResourceEvent) {
 }
 
 func handleConfigMapEvents(event eventmanager.ResourceEvent) {
+	rlog.Info("Received ConfigMap event",
+		rlog.String("type", string(event.Type)),
+		rlog.String("name", event.Resource.GetName()),
+		rlog.String("namespace", event.Resource.GetNamespace()))
+
+	configMapName := viper.GetString(consts.CONFIGMAPNAME)
+	if event.Resource.GetName() != configMapName {
+		return
+	}
+
+	// Invalidate cache for this ConfigMap to ensure fresh data is used
+	namespace := event.Resource.GetNamespace()
+	err := datacenternameservice.InvalidateCache(context.TODO(), namespace, configMapName)
+	if err != nil {
+		rlog.Error("Failed to invalidate ConfigMap cache", err)
+	}
+
 	updateDatacenter(event)
 }
 
@@ -66,27 +83,42 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 		return
 	}
 
-	datacenterName, err := datacenternameservice.GetName(context.TODO())
-	if err != nil {
-		rlog.Error("Failed to get datacenter name", err)
-		return
-	}
-	if datacenterName == "" {
-		rlog.Error("Datacenter name is empty", nil)
-		return
-	}
-
 	datacenterCrdName := viper.GetString(consts.DATACENTERCRDNAME)
 
-	region := viper.GetString(consts.REGION)
-	location := viper.GetString(consts.LOCATION)
+	// Extract ConfigMap data from the event
+	configMapData, exists, err := unstructured.NestedStringMap(event.Resource.Object, "data")
+	if err != nil {
+		rlog.Error("Failed to extract ConfigMap data", err)
+		return
+	}
+	if !exists || configMapData == nil {
+		rlog.Error("ConfigMap data not found", nil)
+		return
+	}
 
-	// get the current datacenter object
+	// Extract values from ConfigMap data
+	datacenterName := configMapData["name"]
+	region := configMapData["region"]
+	location := configMapData["location"]
+	provider := configMapData["provider"]
+	description := configMapData["description"]
+
+	rlog.Info("Processing ConfigMap update for Datacenter",
+		rlog.String("datacenterName", datacenterName),
+		rlog.String("region", region),
+		rlog.String("location", location),
+		rlog.String("provider", provider))
+
+	if datacenterName == "" {
+		rlog.Error("Datacenter name is empty in ConfigMap", nil)
+		return
+	}
+
+	// Get or create the datacenter object
 	datacenterRWMutex.RLock()
 	datacenterObj, err := clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterCrdName, metav1.GetOptions{})
 	datacenterRWMutex.RUnlock()
 	if err != nil {
-
 		// If the datacenter doesn't exist, we need to create it
 		_, err = getOrCreateDatacenterCrd(datacenterCrdName, "", "")
 		if err != nil {
@@ -95,43 +127,83 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 				rlog.String("namespace", event.Resource.GetNamespace()))
 			return
 		}
-		return
+		// Get the newly created datacenter object
+		datacenterRWMutex.RLock()
+		datacenterObj, err = clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterCrdName, metav1.GetOptions{})
+		datacenterRWMutex.RUnlock()
+		if err != nil {
+			rlog.Error("Failed to get newly created Datacenter CRD", err)
+			return
+		}
 	}
 
-	// Update the name in the datacenter object
-	err = unstructured.SetNestedField(datacenterObj.Object, datacenterName, "spec", "displayName")
-	if err != nil {
-		rlog.Error("Failed to set Datacenter name", err,
-			rlog.String("name", event.Resource.GetName()),
-			rlog.String("namespace", event.Resource.GetNamespace()))
-		return
+	// Update the fields in the datacenter object based on ConfigMap data
+	updateNeeded := false
+
+	// Update displayName
+	if datacenterName != "" {
+		err = unstructured.SetNestedField(datacenterObj.Object, datacenterName, "spec", "displayName")
+		if err != nil {
+			rlog.Error("Failed to set Datacenter displayName", err)
+			return
+		}
+		updateNeeded = true
 	}
 
-	err = unstructured.SetNestedField(datacenterObj.Object, region, "spec", "region")
-	if err != nil {
-		rlog.Error("Failed to set Datacenter region", err)
-		return
+	// Update region
+	if region != "" {
+		err = unstructured.SetNestedField(datacenterObj.Object, region, "spec", "region")
+		if err != nil {
+			rlog.Error("Failed to set Datacenter region", err)
+			return
+		}
+		updateNeeded = true
 	}
 
-	err = unstructured.SetNestedField(datacenterObj.Object, location, "spec", "location")
-	if err != nil {
-		rlog.Error("Failed to set Datacenter location", err)
+	// Update location (as a nested object with country field)
+	if location != "" {
+		locationObj := map[string]interface{}{
+			"country": location,
+		}
+		err = unstructured.SetNestedField(datacenterObj.Object, locationObj, "spec", "location")
+		if err != nil {
+			rlog.Error("Failed to set Datacenter location", err)
+			return
+		}
+		updateNeeded = true
+	}
+
+	// Update description with provider information if available
+	if description != "" {
+		err = unstructured.SetNestedField(datacenterObj.Object, description, "spec", "description")
+		if err != nil {
+			rlog.Error("Failed to set Datacenter description", err)
+			return
+		}
+		updateNeeded = true
+	}
+
+	// Only update if changes were made
+	if !updateNeeded {
+		rlog.Info("No updates needed for Datacenter CRD")
 		return
 	}
 
 	// Update the datacenter object
 	_, err = clients.DynamicClient.Resource(datacenterGVR).Update(context.TODO(), datacenterObj, metav1.UpdateOptions{})
-
 	if err != nil {
 		rlog.Error("Failed to update Datacenter CRD", err,
 			rlog.String("name", event.Resource.GetName()),
 			rlog.String("namespace", event.Resource.GetNamespace()))
 		return
 	}
-	rlog.Info("Updated Datacenter CRD with new name",
-		rlog.String("name", datacenterName),
-		rlog.String("namespace", event.Resource.GetNamespace()))
 
+	rlog.Info("Updated Datacenter CRD from ConfigMap",
+		rlog.String("datacenterName", datacenterName),
+		rlog.String("region", region),
+		rlog.String("location", location),
+		rlog.String("provider", provider),
+		rlog.String("namespace", event.Resource.GetNamespace()))
 }
 
 // updateDatacenterWithProvider handles updating the Datacenter CRD with provider information
@@ -183,11 +255,8 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 		return datacenterObj, nil
 	}
 
-	datacenterName, err := datacenternameservice.GetName(context.TODO())
-	if err != nil {
-		rlog.Error("Failed to get datacentername", err)
-		return nil, err
-	}
+	// Get datacenter information from ConfigMap
+	datacenterName, region, location := getDatacenterInfoFromConfigMap()
 
 	// If the datacenter doesn't exist, we need to create it - acquire a write lock
 	datacenterRWMutex.Lock()
@@ -211,6 +280,30 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 		machineProviders = append(machineProviders, providerName)
 	}
 
+	// Build location object if location is provided
+	var locationObj map[string]any
+	if location != "" {
+		locationObj = map[string]any{
+			"country": location,
+		}
+	}
+
+	spec := map[string]any{
+		"kubernetesProviders": kubernetesProviders,
+		"machineProviders":    machineProviders,
+		"displayName":         datacenterName,
+	}
+
+	// Add region if provided
+	if region != "" {
+		spec["region"] = region
+	}
+
+	// Add location if provided
+	if locationObj != nil {
+		spec["location"] = locationObj
+	}
+
 	datacenter := &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": "vitistack.io/v1alpha1",
@@ -218,12 +311,7 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 			"metadata": map[string]any{
 				"name": name,
 			},
-			"spec": map[string]any{
-				"kubernetesProviders": kubernetesProviders,
-				"machineProviders":    machineProviders,
-				"region":              viper.GetString(consts.LOCATION),
-				"displayName":         datacenterName,
-			},
+			"spec": spec,
 		},
 	}
 
@@ -236,6 +324,36 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 		rlog.String("name", name))
 
 	return createdObj, nil
+}
+
+// getDatacenterInfoFromConfigMap retrieves datacenter information from the ConfigMap
+func getDatacenterInfoFromConfigMap() (name, region, location string) {
+	// First try to get from cache/service
+	ctx := context.TODO()
+	datacenterName, err := datacenternameservice.GetName(ctx)
+	if err != nil {
+		rlog.Error("Failed to get datacenter name from service", err)
+		datacenterName = ""
+	}
+
+	// Try to get the ConfigMap directly to extract region and location
+	namespace := viper.GetString(consts.NAMESPACE)
+	configMapName := viper.GetString(consts.CONFIGMAPNAME)
+
+	if clients.Kubernetes != nil {
+		configMap, err := clients.Kubernetes.CoreV1().ConfigMaps(namespace).Get(ctx, configMapName, metav1.GetOptions{})
+		if err == nil && configMap.Data != nil {
+			if datacenterName == "" {
+				datacenterName = configMap.Data["name"]
+			}
+			region = configMap.Data["region"]
+			location = configMap.Data["location"]
+		} else {
+			rlog.Error("Failed to get ConfigMap for datacenter info", err)
+		}
+	}
+
+	return datacenterName, region, location
 }
 
 // addProviderToDatacenter adds a provider to the specified provider list if it doesn't already exist

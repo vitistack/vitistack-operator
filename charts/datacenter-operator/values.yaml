@@ -36,6 +36,24 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+# RBAC configuration
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+# Configuration for the datacenter operator
+config:
+  # Name of the datacenter CRD to manage
+  datacenterCrdName: "datacenter"
+  # Name of the ConfigMap to watch for datacenter configuration
+  configMapName: "datacenter-config"
+  # Enable development mode
+  development: false
+  # Default region for datacenters
+  region: "Norway"
+  # Default location for datacenters
+  location: "Trøndelag"
+
 # This is for setting Kubernetes Annotations to a Pod.
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 podAnnotations: {}
