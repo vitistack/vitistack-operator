@@ -3,7 +3,7 @@ module github.com/vitistack/datacenter-operator
 go 1.24.4
 
 require (
-	github.com/NorskHelsenett/ror v1.2.0-rc15
+	github.com/NorskHelsenett/ror v1.2.0-rc16
 	github.com/vitistack/crds v0.0.1-alpha14
 	k8s.io/apimachinery v0.33.2
 	k8s.io/client-go v0.33.2

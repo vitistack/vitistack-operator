@@ -162,7 +162,7 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 
 	// Update location (as a nested object with country field)
 	if location != "" {
-		locationObj := map[string]interface{}{
+		locationObj := map[string]any{
 			"country": location,
 		}
 		err = unstructured.SetNestedField(datacenterObj.Object, locationObj, "spec", "location")
