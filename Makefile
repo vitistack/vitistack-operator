@@ -171,33 +171,12 @@ k8s-token-kubernetes-cleanup: check-kubectl ## Cleanup temporary pod created by 
 	@echo "${GREEN}Temporary pod cleaned up.${RESET}"
 
 ##@ CRDs & Resources
-.PHONY: k8s-install-configmap k8s-uninstall-configmap k8s-install-crds k8s-viti-crds-download k8s-uninstall-crds
+.PHONY: k8s-install-configmap k8s-uninstall-configmap k8s-install-crds k8s-download-viti-crds k8s-uninstall-crds
 k8s-install-configmap: check-kubectl ## Install configmap into cluster
 	@echo "${GREEN}Installing configmap into cluster...${RESET}"
 	${KUBECTL} apply -f hack/test/manifests/configmap.yaml
 
-k8s-uninstall-configmap: check-kubectl ## Uninstall configmap into cluster
-	@echo "${GREEN}Installing configmap into cluster...${RESET}"
-	${KUBECTL} delete -f hack/test/manifests/configmap.yaml
-
-k8s-install-viti-crds: ## Install CRDs into a cluster
-	@echo "${GREEN}Installing CRDs...${RESET}"
-	@if [ ! -d "hack/crds" ]; then \
-		echo "${RED}Error: hack/crds directory does not exist${RESET}"; \
-		echo "${YELLOW}Run 'make k8s-viti-crds-download' first to download the CRDs (requires GITHUB_TOKEN)${RESET}"; \
-		exit 1; \
-	fi
-	@if [ -z "$$(find hack/crds -name '*.yaml' -type f 2>/dev/null)" ]; then \
-		echo "${RED}Error: No YAML files found in hack/crds directory${RESET}"; \
-		echo "${YELLOW}Run 'make k8s-viti-crds-download' first to download the CRDs (requires GITHUB_TOKEN)${RESET}"; \
-		exit 1; \
-	fi
-	@echo "Found CRD files:"
-	@ls -1 hack/crds/*.yaml | sed 's/^/  - /'
-	${KUBECTL} apply -f hack/crds/
-	@echo "${GREEN}CRDs installed successfully${RESET}"
-
-k8s-viti-crds-download: ## Download CRDs from private repository (requires GITHUB_TOKEN)
+k8s-download-viti-crds: ## Download CRDs from private repository (requires GITHUB_TOKEN)
 	@echo "${GREEN}Downloading CRDs from private repository...${RESET}"
 	@if [ -z "$$GITHUB_TOKEN" ]; then \
 		echo "${RED}Error: GITHUB_TOKEN environment variable is required for private repository access${RESET}"; \
@@ -245,6 +224,27 @@ k8s-viti-crds-download: ## Download CRDs from private repository (requires GITHU
 		exit 1; \
 	fi
 	@echo "${GREEN}CRDs downloaded successfully${RESET}"
+
+k8s-uninstall-configmap: check-kubectl ## Uninstall configmap into cluster
+	@echo "${GREEN}Installing configmap into cluster...${RESET}"
+	${KUBECTL} delete -f hack/test/manifests/configmap.yaml
+
+k8s-install-viti-crds: ## Install CRDs into a cluster
+	@echo "${GREEN}Installing CRDs...${RESET}"
+	@if [ ! -d "hack/crds" ]; then \
+		echo "${RED}Error: hack/crds directory does not exist${RESET}"; \
+		echo "${YELLOW}Run 'make k8s-viti-crds-download' first to download the CRDs (requires GITHUB_TOKEN)${RESET}"; \
+		exit 1; \
+	fi
+	@if [ -z "$$(find hack/crds -name '*.yaml' -type f 2>/dev/null)" ]; then \
+		echo "${RED}Error: No YAML files found in hack/crds directory${RESET}"; \
+		echo "${YELLOW}Run 'make k8s-viti-crds-download' first to download the CRDs (requires GITHUB_TOKEN)${RESET}"; \
+		exit 1; \
+	fi
+	@echo "Found CRD files:"
+	@ls -1 hack/crds/*.yaml | sed 's/^/  - /'
+	${KUBECTL} apply -f hack/crds/
+	@echo "${GREEN}CRDs installed successfully${RESET}"
 
 k8s-uninstall-crds: check-kubectl ## Uninstall CRDs into a cluster
 	@echo "${RED}Uninstalling CRDs...${RESET}"
