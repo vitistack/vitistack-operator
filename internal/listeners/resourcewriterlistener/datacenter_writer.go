@@ -99,6 +99,7 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 	// Extract values from ConfigMap data
 	datacenterName := configMapData["name"]
 	region := configMapData["region"]
+	zone := configMapData["zone"]
 	location := configMapData["location"]
 	provider := configMapData["provider"]
 	description := configMapData["description"]
@@ -106,6 +107,7 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 	rlog.Info("Processing ConfigMap update for Datacenter",
 		rlog.String("datacenterName", datacenterName),
 		rlog.String("region", region),
+		rlog.String("zone", zone),
 		rlog.String("location", location),
 		rlog.String("provider", provider))
 
@@ -160,6 +162,16 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 		updateNeeded = true
 	}
 
+	// Update zone
+	if zone != "" {
+		err = unstructured.SetNestedField(datacenterObj.Object, zone, "spec", "zone")
+		if err != nil {
+			rlog.Error("Failed to set Datacenter zone", err)
+			return
+		}
+		updateNeeded = true
+	}
+
 	// Update location (as a nested object with country field)
 	if location != "" {
 		locationObj := map[string]any{
@@ -201,6 +213,7 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 	rlog.Info("Updated Datacenter CRD from ConfigMap",
 		rlog.String("datacenterName", datacenterName),
 		rlog.String("region", region),
+		rlog.String("zone", zone),
 		rlog.String("location", location),
 		rlog.String("provider", provider),
 		rlog.String("namespace", event.Resource.GetNamespace()))
@@ -256,7 +269,7 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 	}
 
 	// Get datacenter information from ConfigMap
-	datacenterName, region, location := getDatacenterInfoFromConfigMap()
+	datacenterName, region, location, zone := getDatacenterInfoFromConfigMap()
 
 	// If the datacenter doesn't exist, we need to create it - acquire a write lock
 	datacenterRWMutex.Lock()
@@ -299,6 +312,11 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 		spec["region"] = region
 	}
 
+	// Add zone if provided
+	if zone != "" {
+		spec["zone"] = zone
+	}
+
 	// Add location if provided
 	if locationObj != nil {
 		spec["location"] = locationObj
@@ -327,7 +345,7 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 }
 
 // getDatacenterInfoFromConfigMap retrieves datacenter information from the ConfigMap
-func getDatacenterInfoFromConfigMap() (name, region, location string) {
+func getDatacenterInfoFromConfigMap() (name, region, location, zone string) {
 	// First try to get from cache/service
 	ctx := context.TODO()
 	datacenterName, err := datacenternameservice.GetName(ctx)
@@ -336,7 +354,7 @@ func getDatacenterInfoFromConfigMap() (name, region, location string) {
 		datacenterName = ""
 	}
 
-	// Try to get the ConfigMap directly to extract region and location
+	// Try to get the ConfigMap directly to extract region, zone and location
 	namespace := viper.GetString(consts.NAMESPACE)
 	configMapName := viper.GetString(consts.CONFIGMAPNAME)
 
@@ -348,12 +366,13 @@ func getDatacenterInfoFromConfigMap() (name, region, location string) {
 			}
 			region = configMap.Data["region"]
 			location = configMap.Data["location"]
+			zone = configMap.Data["zone"]
 		} else {
 			rlog.Error("Failed to get ConfigMap for datacenter info", err)
 		}
 	}
 
-	return datacenterName, region, location
+	return datacenterName, region, location, zone
 }
 
 // addProviderToDatacenter adds a provider to the specified provider list if it doesn't already exist

@@ -6,6 +6,7 @@ data:
   # Required configuration keys for the datacenter-operator
   name: "test-datacenter"
   provider: "test-provider"
+  description: "Test datacenter"
   region: "test-region"
   location: "test-country"
-  description: "Test datacenter"
+  zone: "test-zone"

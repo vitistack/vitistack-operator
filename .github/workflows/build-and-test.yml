@@ -135,8 +135,8 @@ jobs:
           GOPROXY: direct
 
       - name: Run security scan
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./...
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: go.mod
         env:
           GOPRIVATE: github.com/vitistack/*
