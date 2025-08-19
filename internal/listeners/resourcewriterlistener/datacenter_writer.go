@@ -122,7 +122,7 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 	datacenterRWMutex.RUnlock()
 	if err != nil {
 		// If the datacenter doesn't exist, we need to create it
-		_, err = getOrCreateDatacenterCrd(datacenterName, "", "")
+		_, err = getOrCreateDatacenterCrd(datacenterCrdName, "", "")
 		if err != nil {
 			rlog.Error("Failed to get or create Datacenter CRD", err,
 				rlog.String("name", event.Resource.GetName()),
