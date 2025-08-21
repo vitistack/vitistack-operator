@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/NorskHelsenett/ror v1.4.1
-	github.com/vitistack/crds v0.0.1-alpha21
+	github.com/vitistack/crds v0.0.1-alpha22
 	k8s.io/apimachinery v0.33.4
 	k8s.io/client-go v0.33.4
 )
