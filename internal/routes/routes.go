@@ -2,12 +2,12 @@ package routes
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/vitistack/datacenter-operator/internal/handlers/datacenterhandler"
-	"github.com/vitistack/datacenter-operator/internal/handlers/healthhandler"
-	"github.com/vitistack/datacenter-operator/internal/handlers/kubernetesprovidershandler"
-	"github.com/vitistack/datacenter-operator/internal/handlers/machineprovidershandler"
-	"github.com/vitistack/datacenter-operator/internal/handlers/versionhandler"
-	"github.com/vitistack/datacenter-operator/internal/middlewares"
+	"github.com/vitistack/vitistack-operator/internal/handlers/healthhandler"
+	"github.com/vitistack/vitistack-operator/internal/handlers/kubernetesprovidershandler"
+	"github.com/vitistack/vitistack-operator/internal/handlers/machineprovidershandler"
+	"github.com/vitistack/vitistack-operator/internal/handlers/versionhandler"
+	"github.com/vitistack/vitistack-operator/internal/handlers/vitistackhandler"
+	"github.com/vitistack/vitistack-operator/internal/middlewares"
 )
 
 func SetupRoutes(r *mux.Router) {
@@ -19,7 +19,7 @@ func SetupRoutes(r *mux.Router) {
 
 	v1route := r.NewRoute().Subrouter().PathPrefix("/v1").Subrouter()
 	v1route.Use(middlewares.AuthMiddleware)
-	v1route.HandleFunc("/datacenter/name", datacenterhandler.GetName).Methods("GET")
+	v1route.HandleFunc("/vitistack/name", vitistackhandler.GetName).Methods("GET")
 
 	v1route.HandleFunc("/machineproviders", machineprovidershandler.GetMachineProviders).Methods("GET")
 	v1route.HandleFunc("/machineproviders/{uid}", machineprovidershandler.GetMachineProviderByUID).Methods("GET")

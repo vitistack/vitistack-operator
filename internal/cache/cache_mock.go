@@ -7,8 +7,8 @@ import (
 )
 
 // Mock implementation for testing
-func NewMockDatacenterCache() *DatacenterCache {
-	mockCache := &DatacenterCache{}
+func NewMockVitistackCache() *VitistackCache {
+	mockCache := &VitistackCache{}
 	mockCache.cacheLayer = &mockCacheLayer{
 		data: make(map[string]string),
 	}

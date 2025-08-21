@@ -62,7 +62,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/vitistack/datacenter-operator
+          images: ghcr.io/vitistack/vitistack-operator
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -131,14 +131,14 @@ jobs:
             value: "${VERSION}"
           EOF
 
-          npx -y yq-cli write --file=.github/yq-script.yaml charts/datacenter-operator/Chart.yaml
-          npx -y yq-cli write --file=.github/yq-values-script.yaml charts/datacenter-operator/values.yaml
+          npx -y yq-cli write --file=.github/yq-script.yaml charts/vitistack-operator/Chart.yaml
+          npx -y yq-cli write --file=.github/yq-values-script.yaml charts/vitistack-operator/values.yaml
 
       - name: Package Helm chart
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v*}"
-          helm package charts/datacenter-operator
+          helm package charts/vitistack-operator
 
       - name: Log in to GitHub Container Registry
         run: |
@@ -148,4 +148,4 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v*}"
-          helm push datacenter-operator-${VERSION}.tgz oci://ghcr.io/norskhelsenett/helm
+          helm push vitistack-operator-${VERSION}.tgz oci://ghcr.io/norskhelsenett/helm

@@ -1,16 +1,16 @@
-package datacenterhandler
+package vitistackhandler
 
 import (
 	"net/http"
 
-	"github.com/vitistack/datacenter-operator/internal/helpers/httphelpers"
-	nameservice "github.com/vitistack/datacenter-operator/internal/services/datacenternameservice"
+	"github.com/vitistack/vitistack-operator/internal/helpers/httphelpers"
+	"github.com/vitistack/vitistack-operator/internal/services/vitistacknameservice"
 )
 
 func GetName(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	name, err := nameservice.GetName(ctx)
+	name, err := vitistacknameservice.GetName(ctx)
 	if err != nil {
 		http.Error(w, "Failed to get name from configmap", http.StatusInternalServerError)
 		return

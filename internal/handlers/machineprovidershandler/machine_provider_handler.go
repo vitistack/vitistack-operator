@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/vitistack/datacenter-operator/internal/helpers/httphelpers"
-	"github.com/vitistack/datacenter-operator/internal/helpers/uuidhelpers"
-	"github.com/vitistack/datacenter-operator/internal/repositories"
+	"github.com/vitistack/vitistack-operator/internal/helpers/httphelpers"
+	"github.com/vitistack/vitistack-operator/internal/helpers/uuidhelpers"
+	"github.com/vitistack/vitistack-operator/internal/repositories"
 )
 
 func GetMachineProviders(w http.ResponseWriter, r *http.Request) {

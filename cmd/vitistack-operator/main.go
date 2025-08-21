@@ -7,32 +7,33 @@ import (
 	"syscall"
 
 	"github.com/NorskHelsenett/ror/pkg/rlog"
-	"github.com/vitistack/datacenter-operator/internal/cache"
-	"github.com/vitistack/datacenter-operator/internal/clients"
-	"github.com/vitistack/datacenter-operator/internal/clients/dynamicclienthandler"
-	"github.com/vitistack/datacenter-operator/internal/httpserver"
-	"github.com/vitistack/datacenter-operator/internal/listeners/resourceloglistener"
-	"github.com/vitistack/datacenter-operator/internal/listeners/resourcewriterlistener"
-	"github.com/vitistack/datacenter-operator/internal/repositories"
-	"github.com/vitistack/datacenter-operator/internal/services/dynamichandler"
-	"github.com/vitistack/datacenter-operator/internal/services/initializeservice"
-	"github.com/vitistack/datacenter-operator/internal/settings"
+	"github.com/vitistack/vitistack-operator/internal/cache"
+	"github.com/vitistack/vitistack-operator/internal/clients"
+	"github.com/vitistack/vitistack-operator/internal/clients/dynamicclienthandler"
+	"github.com/vitistack/vitistack-operator/internal/httpserver"
+	"github.com/vitistack/vitistack-operator/internal/listeners/resourceloglistener"
+	"github.com/vitistack/vitistack-operator/internal/listeners/resourcewriterlistener"
+	"github.com/vitistack/vitistack-operator/internal/repositories"
+	"github.com/vitistack/vitistack-operator/internal/services/dynamichandler"
+	"github.com/vitistack/vitistack-operator/internal/services/initializeservice"
+	"github.com/vitistack/vitistack-operator/internal/settings"
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
+// main is the entrypoint for the vitistack-operator binary
 func main() {
 	_, _ = maxprocs.Set(maxprocs.Logger(rlog.Infof))
 	cancelChan := make(chan os.Signal, 1)
 
 	stop := make(chan struct{})
-	// catch SIGETRM or SIGINTERRUPT.
+	// catch SIGTERM or SIGINT.
 	signal.Notify(cancelChan, syscall.SIGTERM, syscall.SIGINT)
 	var err error
 
 	settings.Init()
 	clients.Init()
 	initializeservice.CheckPrerequisites()
-	cache.Cache, err = cache.DatacenterCache{}.NewDatacenterCache()
+	cache.Cache, err = cache.VitistackCache{}.NewVitistackCache()
 	if err != nil {
 		panic(err)
 	}

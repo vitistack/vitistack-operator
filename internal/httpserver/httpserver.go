@@ -8,8 +8,8 @@ import (
 	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
-	"github.com/vitistack/datacenter-operator/internal/routes"
-	"github.com/vitistack/datacenter-operator/pkg/consts"
+	"github.com/vitistack/vitistack-operator/internal/routes"
+	"github.com/vitistack/vitistack-operator/pkg/consts"
 )
 
 func Start() {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/vitistack/datacenter-operator/internal/cache"
-	"github.com/vitistack/datacenter-operator/internal/repositoryinterfaces"
+	"github.com/vitistack/vitistack-operator/internal/cache"
+	"github.com/vitistack/vitistack-operator/internal/repositoryinterfaces"
 
 	"github.com/vitistack/crds/pkg/v1alpha1"
 )

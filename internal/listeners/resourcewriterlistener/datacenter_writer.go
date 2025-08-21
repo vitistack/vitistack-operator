@@ -7,24 +7,24 @@ import (
 
 	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/spf13/viper"
-	"github.com/vitistack/datacenter-operator/internal/clients"
-	"github.com/vitistack/datacenter-operator/internal/services/datacenternameservice"
-	"github.com/vitistack/datacenter-operator/pkg/consts"
-	"github.com/vitistack/datacenter-operator/pkg/eventmanager"
+	"github.com/vitistack/vitistack-operator/internal/clients"
+	"github.com/vitistack/vitistack-operator/internal/services/vitistacknameservice"
+	"github.com/vitistack/vitistack-operator/pkg/consts"
+	"github.com/vitistack/vitistack-operator/pkg/eventmanager"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// GroupVersionResource for Datacenter CRD
-var datacenterGVR = schema.GroupVersionResource{
+// GroupVersionResource for Vitistack CRD
+var vitistackGVR = schema.GroupVersionResource{
 	Group:    "vitistack.io",
 	Version:  "v1alpha1",
-	Resource: "datacenters",
+	Resource: "vitistacks",
 }
 
-// Package-level mutex for datacenter operations to prevent race conditions
-var datacenterRWMutex = &sync.RWMutex{}
+// Package-level mutex for vitistack operations to prevent race conditions
+var vitistackRWMutex = &sync.RWMutex{}
 
 // Provider type constants to determine which provider list to update
 const (
@@ -40,12 +40,12 @@ func RegisterWriters() {
 
 // handleKubernetesProviderEvents processes events for KubernetesProvider resources
 func handleKubernetesProviderEvents(event eventmanager.ResourceEvent) {
-	updateDatacenterWithProvider(event, KubernetesProviderType)
+	updateVitistackWithProvider(event, KubernetesProviderType)
 }
 
 // handleMachineProviderEvents processes events for MachineProvider resources
 func handleMachineProviderEvents(event eventmanager.ResourceEvent) {
-	updateDatacenterWithProvider(event, MachineProviderType)
+	updateVitistackWithProvider(event, MachineProviderType)
 }
 
 func handleConfigMapEvents(event eventmanager.ResourceEvent) {
@@ -61,15 +61,15 @@ func handleConfigMapEvents(event eventmanager.ResourceEvent) {
 
 	// Invalidate cache for this ConfigMap to ensure fresh data is used
 	namespace := event.Resource.GetNamespace()
-	err := datacenternameservice.InvalidateCache(context.TODO(), namespace, configMapName)
+	err := vitistacknameservice.InvalidateCache(context.TODO(), namespace, configMapName)
 	if err != nil {
 		rlog.Error("Failed to invalidate ConfigMap cache", err)
 	}
 
-	updateDatacenter(event)
+	updateVitistack(event)
 }
 
-func updateDatacenter(event eventmanager.ResourceEvent) {
+func updateVitistack(event eventmanager.ResourceEvent) {
 	if event.Resource.Object == nil {
 		rlog.Error("Resource object is nil", nil)
 		return
@@ -83,7 +83,7 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 		return
 	}
 
-	datacenterCrdName := viper.GetString(consts.DATACENTERCRDNAME)
+	vitistackCrdName := viper.GetString(consts.VITISTACKCRDNAME)
 
 	// Extract ConfigMap data from the event
 	configMapData, exists, err := unstructured.NestedStringMap(event.Resource.Object, "data")
@@ -97,56 +97,56 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 	}
 
 	// Extract values from ConfigMap data
-	datacenterName := configMapData["name"]
+	vitistackName := configMapData["name"]
 	region := configMapData["region"]
 	zone := configMapData["zone"]
 	location := configMapData["location"]
 	provider := configMapData["provider"]
 	description := configMapData["description"]
 
-	rlog.Info("Processing ConfigMap update for Datacenter",
-		rlog.String("datacenterName", datacenterName),
+	rlog.Info("Processing ConfigMap update for Vitistack",
+		rlog.String("vitistackName", vitistackName),
 		rlog.String("region", region),
 		rlog.String("zone", zone),
 		rlog.String("location", location),
 		rlog.String("provider", provider))
 
-	if datacenterName == "" {
-		rlog.Error("Datacenter name is empty in ConfigMap", nil)
+	if vitistackName == "" {
+		rlog.Error("Vitistack name is empty in ConfigMap", nil)
 		return
 	}
 
-	// Get or create the datacenter object
-	datacenterRWMutex.RLock()
-	datacenterObj, err := clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterCrdName, metav1.GetOptions{})
-	datacenterRWMutex.RUnlock()
+	// Get or create the vitistack object
+	vitistackRWMutex.RLock()
+	vitistackObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackCrdName, metav1.GetOptions{})
+	vitistackRWMutex.RUnlock()
 	if err != nil {
-		// If the datacenter doesn't exist, we need to create it
-		_, err = getOrCreateDatacenterCrd(datacenterCrdName, "", "")
+		// If the vitistack doesn't exist, we need to create it
+		_, err = getOrCreateVitistackCrd(vitistackCrdName, "", "")
 		if err != nil {
-			rlog.Error("Failed to get or create Datacenter CRD", err,
+			rlog.Error("Failed to get or create Viti stack CRD", err,
 				rlog.String("name", event.Resource.GetName()),
 				rlog.String("namespace", event.Resource.GetNamespace()))
 			return
 		}
-		// Get the newly created datacenter object
-		datacenterRWMutex.RLock()
-		datacenterObj, err = clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterCrdName, metav1.GetOptions{})
-		datacenterRWMutex.RUnlock()
+		// Get the newly created vitistack object
+		vitistackRWMutex.RLock()
+		vitistackObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackCrdName, metav1.GetOptions{})
+		vitistackRWMutex.RUnlock()
 		if err != nil {
-			rlog.Error("Failed to get newly created Datacenter CRD", err)
+			rlog.Error("Failed to get newly created Viti stack CRD", err)
 			return
 		}
 	}
 
-	// Update the fields in the datacenter object based on ConfigMap data
+	// Update the fields in the vitistack object based on ConfigMap data
 	updateNeeded := false
 
 	// Update displayName
-	if datacenterName != "" {
-		err = unstructured.SetNestedField(datacenterObj.Object, datacenterName, "spec", "displayName")
+	if vitistackName != "" {
+		err = unstructured.SetNestedField(vitistackObj.Object, vitistackName, "spec", "displayName")
 		if err != nil {
-			rlog.Error("Failed to set Datacenter displayName", err)
+			rlog.Error("Failed to set Viti stack displayName", err)
 			return
 		}
 		updateNeeded = true
@@ -154,9 +154,9 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 
 	// Update region
 	if region != "" {
-		err = unstructured.SetNestedField(datacenterObj.Object, region, "spec", "region")
+		err = unstructured.SetNestedField(vitistackObj.Object, region, "spec", "region")
 		if err != nil {
-			rlog.Error("Failed to set Datacenter region", err)
+			rlog.Error("Failed to set Viti stack region", err)
 			return
 		}
 		updateNeeded = true
@@ -164,9 +164,9 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 
 	// Update zone
 	if zone != "" {
-		err = unstructured.SetNestedField(datacenterObj.Object, zone, "spec", "zone")
+		err = unstructured.SetNestedField(vitistackObj.Object, zone, "spec", "zone")
 		if err != nil {
-			rlog.Error("Failed to set Datacenter zone", err)
+			rlog.Error("Failed to set Viti stack zone", err)
 			return
 		}
 		updateNeeded = true
@@ -177,9 +177,9 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 		locationObj := map[string]any{
 			"country": location,
 		}
-		err = unstructured.SetNestedField(datacenterObj.Object, locationObj, "spec", "location")
+		err = unstructured.SetNestedField(vitistackObj.Object, locationObj, "spec", "location")
 		if err != nil {
-			rlog.Error("Failed to set Datacenter location", err)
+			rlog.Error("Failed to set Viti stack location", err)
 			return
 		}
 		updateNeeded = true
@@ -187,9 +187,9 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 
 	// Update description with provider information if available
 	if description != "" {
-		err = unstructured.SetNestedField(datacenterObj.Object, description, "spec", "description")
+		err = unstructured.SetNestedField(vitistackObj.Object, description, "spec", "description")
 		if err != nil {
-			rlog.Error("Failed to set Datacenter description", err)
+			rlog.Error("Failed to set Viti stack description", err)
 			return
 		}
 		updateNeeded = true
@@ -197,21 +197,21 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 
 	// Only update if changes were made
 	if !updateNeeded {
-		rlog.Info("No updates needed for Datacenter CRD")
+		rlog.Info("No updates needed for Viti stack CRD")
 		return
 	}
 
-	// Update the datacenter object
-	_, err = clients.DynamicClient.Resource(datacenterGVR).Update(context.TODO(), datacenterObj, metav1.UpdateOptions{})
+	// Update the vitistack object
+	_, err = clients.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), vitistackObj, metav1.UpdateOptions{})
 	if err != nil {
-		rlog.Error("Failed to update Datacenter CRD", err,
+		rlog.Error("Failed to update Viti stack CRD", err,
 			rlog.String("name", event.Resource.GetName()),
 			rlog.String("namespace", event.Resource.GetNamespace()))
 		return
 	}
 
-	rlog.Info("Updated Datacenter CRD from ConfigMap",
-		rlog.String("datacenterName", datacenterName),
+	rlog.Info("Updated Viti stack CRD from ConfigMap",
+		rlog.String("vitistackName", vitistackName),
 		rlog.String("region", region),
 		rlog.String("zone", zone),
 		rlog.String("location", location),
@@ -219,9 +219,9 @@ func updateDatacenter(event eventmanager.ResourceEvent) {
 		rlog.String("namespace", event.Resource.GetNamespace()))
 }
 
-// updateDatacenterWithProvider handles updating the Datacenter CRD with provider information
+// updateVitistackWithProvider handles updating the Viti stack CRD with provider information
 // based on the providerType (either "kubernetesProviders" or "machineProviders")
-func updateDatacenterWithProvider(event eventmanager.ResourceEvent, providerType string) {
+func updateVitistackWithProvider(event eventmanager.ResourceEvent, providerType string) {
 	// Use the shared dynamic client
 	if clients.DynamicClient == nil {
 		rlog.Error("Dynamic client is not initialized", nil)
@@ -237,48 +237,48 @@ func updateDatacenterWithProvider(event eventmanager.ResourceEvent, providerType
 		rlog.String("name", providerName),
 		rlog.String("namespace", namespace))
 
-	// Get or create the datacenter CRD
-	datacenterCrdName := viper.GetString(consts.DATACENTERCRDNAME)
-	datacenterObj, err := getOrCreateDatacenterCrd(datacenterCrdName, providerName, providerType)
+	// Get or create the vitistack CRD
+	vitistackCrdName := viper.GetString(consts.VITISTACKCRDNAME)
+	vitistackObj, err := getOrCreateVitistackCrd(vitistackCrdName, providerName, providerType)
 	if err != nil {
-		rlog.Error("Failed to get or create Datacenter CRD", err,
-			rlog.String("name", datacenterCrdName))
+		rlog.Error("Failed to get or create Viti stack CRD", err,
+			rlog.String("name", vitistackCrdName))
 		return
 	}
 
 	// Handle based on event type
 	switch event.Type {
 	case eventmanager.EventAdd, eventmanager.EventUpdate:
-		addProviderToDatacenter(datacenterObj, providerName, providerType)
+		addProviderToVitistack(vitistackObj, providerName, providerType)
 	case eventmanager.EventDelete:
-		removeProviderFromDatacenter(datacenterObj, providerName, providerType)
+		removeProviderFromVitistack(vitistackObj, providerName, providerType)
 	default:
 		rlog.Info("Unhandled event type", rlog.String("type", string(event.Type)))
 	}
 }
 
-// getOrCreateDatacenterCrd tries to get an existing datacenter CRD or creates a new one if it doesn't exist
-func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstructured.Unstructured, error) {
-	// Use a read lock first since we're just checking if the datacenter exists
-	datacenterRWMutex.RLock()
-	datacenterObj, err := clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), name, metav1.GetOptions{})
-	datacenterRWMutex.RUnlock()
+// getOrCreateVitistackCrd tries to get an existing vitistack CRD or creates a new one if it doesn't exist
+func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstructured.Unstructured, error) {
+	// Use a read lock first since we're just checking if the vitistack exists
+	vitistackRWMutex.RLock()
+	vitistackObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), name, metav1.GetOptions{})
+	vitistackRWMutex.RUnlock()
 
 	if err == nil {
-		return datacenterObj, nil
+		return vitistackObj, nil
 	}
 
-	// Get datacenter information from ConfigMap
-	datacenterName, region, location, zone := getDatacenterInfoFromConfigMap()
+	// Get vitistack information from ConfigMap
+	vitistackName, region, location, zone := getVitistackInfoFromConfigMap()
 
-	// If the datacenter doesn't exist, we need to create it - acquire a write lock
-	datacenterRWMutex.Lock()
-	defer datacenterRWMutex.Unlock()
+	// If the vitistack doesn't exist, we need to create it - acquire a write lock
+	vitistackRWMutex.Lock()
+	defer vitistackRWMutex.Unlock()
 
-	// Check again in case another goroutine created the datacenter while we were waiting for the lock
-	datacenterObj, err = clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), name, metav1.GetOptions{})
+	// Check again in case another goroutine created the vitistack while we were waiting for the lock
+	vitistackObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), name, metav1.GetOptions{})
 	if err == nil {
-		return datacenterObj, nil
+		return vitistackObj, nil
 	}
 
 	// Initialize with empty lists
@@ -304,7 +304,7 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 	spec := map[string]any{
 		"kubernetesProviders": kubernetesProviders,
 		"machineProviders":    machineProviders,
-		"displayName":         datacenterName,
+		"displayName":         vitistackName,
 	}
 
 	// Add region if provided
@@ -322,10 +322,10 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 		spec["location"] = locationObj
 	}
 
-	datacenter := &unstructured.Unstructured{
+	vitistack := &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": "vitistack.io/v1alpha1",
-			"kind":       "Datacenter",
+			"kind":       "Vitistack",
 			"metadata": map[string]any{
 				"name": name,
 			},
@@ -333,25 +333,25 @@ func getOrCreateDatacenterCrd(name, providerName, providerType string) (*unstruc
 		},
 	}
 
-	createdObj, err := clients.DynamicClient.Resource(datacenterGVR).Create(context.TODO(), datacenter, metav1.CreateOptions{})
+	createdObj, err := clients.DynamicClient.Resource(vitistackGVR).Create(context.TODO(), vitistack, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	rlog.Info("Created new Datacenter CRD",
+	rlog.Info("Created new Vitistack CRD",
 		rlog.String("name", name))
 
 	return createdObj, nil
 }
 
-// getDatacenterInfoFromConfigMap retrieves datacenter information from the ConfigMap
-func getDatacenterInfoFromConfigMap() (name, region, location, zone string) {
+// getVitistackInfoFromConfigMap retrieves vitistack information from the ConfigMap
+func getVitistackInfoFromConfigMap() (name, region, location, zone string) {
 	// First try to get from cache/service
 	ctx := context.TODO()
-	datacenterName, err := datacenternameservice.GetName(ctx)
+	vitistackName, err := vitistacknameservice.GetName(ctx)
 	if err != nil {
-		rlog.Error("Failed to get datacenter name from service", err)
-		datacenterName = ""
+		rlog.Error("Failed to get vitistack name from service", err)
+		vitistackName = ""
 	}
 
 	// Try to get the ConfigMap directly to extract region, zone and location
@@ -361,40 +361,40 @@ func getDatacenterInfoFromConfigMap() (name, region, location, zone string) {
 	if clients.Kubernetes != nil {
 		configMap, err := clients.Kubernetes.CoreV1().ConfigMaps(namespace).Get(ctx, configMapName, metav1.GetOptions{})
 		if err == nil && configMap.Data != nil {
-			if datacenterName == "" {
-				datacenterName = configMap.Data["name"]
+			if vitistackName == "" {
+				vitistackName = configMap.Data["name"]
 			}
 			region = configMap.Data["region"]
 			location = configMap.Data["location"]
 			zone = configMap.Data["zone"]
 		} else {
-			rlog.Error("Failed to get ConfigMap for datacenter info", err)
+			rlog.Error("Failed to get ConfigMap for vitistack info", err)
 		}
 	}
 
-	return datacenterName, region, location, zone
+	return vitistackName, region, location, zone
 }
 
-// addProviderToDatacenter adds a provider to the specified provider list if it doesn't already exist
-func addProviderToDatacenter(datacenterObj *unstructured.Unstructured, providerName, providerType string) {
-	datacenterName := datacenterObj.GetName()
+// addProviderToVitistack adds a provider to the specified provider list if it doesn't already exist
+func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerName, providerType string) {
+	vitistackName := vitistackObj.GetName()
 
 	// First, use a read lock to check if the provider already exists
-	datacenterRWMutex.RLock()
-	// Get the latest version of the datacenter object
-	latestObj, err := clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterName, metav1.GetOptions{})
+	vitistackRWMutex.RLock()
+	// Get the latest version of the vitistack object
+	latestObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
-		datacenterRWMutex.RUnlock()
-		rlog.Error("Failed to get Datacenter CRD", err,
-			rlog.String("name", datacenterName))
+		vitistackRWMutex.RUnlock()
+		rlog.Error("Failed to get Vitistack CRD", err,
+			rlog.String("name", vitistackName))
 		return
 	}
 
 	// Check if provider already exists in the list
 	providers, found, err := unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
-		datacenterRWMutex.RUnlock()
-		rlog.Error("Failed to get providers from datacenter", err,
+		vitistackRWMutex.RUnlock()
+		rlog.Error("Failed to get providers from vitistack", err,
 			rlog.String("providerType", providerType))
 		return
 	}
@@ -406,34 +406,34 @@ func addProviderToDatacenter(datacenterObj *unstructured.Unstructured, providerN
 	providerExists := slices.Contains(providers, providerName)
 	// If provider already exists, just log and return (no need for a write lock)
 	if providerExists {
-		datacenterRWMutex.RUnlock()
-		rlog.Info("Provider already exists in Datacenter, no update needed",
+		vitistackRWMutex.RUnlock()
+		rlog.Info("Provider already exists in Viti stack, no update needed",
 			rlog.String("providerType", providerType),
 			rlog.String("provider", providerName),
-			rlog.String("datacenter", datacenterName))
+			rlog.String("vitistack", vitistackName))
 		return
 	}
 
 	// Release read lock before acquiring write lock to avoid deadlock
-	datacenterRWMutex.RUnlock()
+	vitistackRWMutex.RUnlock()
 
 	// Acquire write lock for the update operation
-	datacenterRWMutex.Lock()
-	defer datacenterRWMutex.Unlock()
+	vitistackRWMutex.Lock()
+	defer vitistackRWMutex.Unlock()
 
 	// Get the latest version again after acquiring the write lock
 	// This ensures we're working with current data even if it changed while we were waiting for the lock
-	latestObj, err = clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterName, metav1.GetOptions{})
+	latestObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
-		rlog.Error("Failed to get updated Datacenter CRD", err,
-			rlog.String("name", datacenterName))
+		rlog.Error("Failed to get updated Vitistack CRD", err,
+			rlog.String("name", vitistackName))
 		return
 	}
 
 	// Re-check if provider exists (in case it was added while we were switching locks)
 	providers, found, err = unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
-		rlog.Error("Failed to get providers from datacenter", err,
+		rlog.Error("Failed to get providers from vitistack", err,
 			rlog.String("providerType", providerType))
 		return
 	}
@@ -450,61 +450,61 @@ func addProviderToDatacenter(datacenterObj *unstructured.Unstructured, providerN
 		// Update the unstructured object
 		err = unstructured.SetNestedStringSlice(latestObj.Object, providers, "spec", providerType)
 		if err != nil {
-			rlog.Error("Failed to set providers in datacenter", err,
+			rlog.Error("Failed to set providers in vitistack", err,
 				rlog.String("providerType", providerType))
 			return
 		}
 
-		// Update the datacenter resource
-		_, err = clients.DynamicClient.Resource(datacenterGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
+		// Update the vitistack resource
+		_, err = clients.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
 		if err != nil {
-			rlog.Error("Failed to update Datacenter CRD", err,
-				rlog.String("name", datacenterName))
+			rlog.Error("Failed to update Viti stack CRD", err,
+				rlog.String("name", vitistackName))
 			return
 		}
 
-		rlog.Info("Updated Datacenter CRD with provider",
-			rlog.String("name", datacenterName),
+		rlog.Info("Updated Viti stack CRD with provider",
+			rlog.String("name", vitistackName),
 			rlog.String("providerType", providerType),
 			rlog.String("provider", providerName))
 	} else {
-		rlog.Info("Provider already exists in Datacenter, no update needed",
+		rlog.Info("Provider already exists in Viti stack, no update needed",
 			rlog.String("providerType", providerType),
 			rlog.String("provider", providerName),
-			rlog.String("datacenter", datacenterName))
+			rlog.String("vitistack", vitistackName))
 	}
 }
 
-// removeProviderFromDatacenter removes a provider from the specified provider list
-func removeProviderFromDatacenter(datacenterObj *unstructured.Unstructured, providerName, providerType string) {
-	datacenterName := datacenterObj.GetName()
+// removeProviderFromVitistack removes a provider from the specified provider list
+func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, providerName, providerType string) {
+	vitistackName := vitistackObj.GetName()
 
 	// First, use a read lock to check if the provider exists
-	datacenterRWMutex.RLock()
-	// Get the latest version of the datacenter object
-	latestObj, err := clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterName, metav1.GetOptions{})
+	vitistackRWMutex.RLock()
+	// Get the latest version of the vitistack object
+	latestObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
-		datacenterRWMutex.RUnlock()
-		rlog.Error("Failed to get Datacenter CRD", err,
-			rlog.String("name", datacenterName))
+		vitistackRWMutex.RUnlock()
+		rlog.Error("Failed to get Viti stack CRD", err,
+			rlog.String("name", vitistackName))
 		return
 	}
 
 	// Check the current providers list
 	providers, found, err := unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
-		datacenterRWMutex.RUnlock()
-		rlog.Error("Failed to get providers from datacenter", err,
+		vitistackRWMutex.RUnlock()
+		rlog.Error("Failed to get providers from vitistack", err,
 			rlog.String("providerType", providerType))
 		return
 	}
 
 	if !found || len(providers) == 0 {
 		// Nothing to remove
-		datacenterRWMutex.RUnlock()
-		rlog.Info("No providers found in datacenter to remove",
+		vitistackRWMutex.RUnlock()
+		rlog.Info("No providers found in vitistack to remove",
 			rlog.String("providerType", providerType),
-			rlog.String("datacenter", datacenterName))
+			rlog.String("vitistack", vitistackName))
 		return
 	}
 
@@ -519,41 +519,41 @@ func removeProviderFromDatacenter(datacenterObj *unstructured.Unstructured, prov
 
 	// If provider doesn't exist, just log and return (no need for a write lock)
 	if providerIndex < 0 {
-		datacenterRWMutex.RUnlock()
-		rlog.Info("Provider not found in Datacenter, no removal needed",
+		vitistackRWMutex.RUnlock()
+		rlog.Info("Provider not found in Viti stack, no removal needed",
 			rlog.String("providerType", providerType),
 			rlog.String("provider", providerName),
-			rlog.String("datacenter", datacenterName))
+			rlog.String("vitistack", vitistackName))
 		return
 	}
 
 	// Release read lock before acquiring write lock to avoid deadlock
-	datacenterRWMutex.RUnlock()
+	vitistackRWMutex.RUnlock()
 
 	// Acquire write lock for the update operation
-	datacenterRWMutex.Lock()
-	defer datacenterRWMutex.Unlock()
+	vitistackRWMutex.Lock()
+	defer vitistackRWMutex.Unlock()
 
 	// Get the latest version again after acquiring the write lock
-	latestObj, err = clients.DynamicClient.Resource(datacenterGVR).Get(context.TODO(), datacenterName, metav1.GetOptions{})
+	latestObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
-		rlog.Error("Failed to get updated Datacenter CRD", err,
-			rlog.String("name", datacenterName))
+		rlog.Error("Failed to get updated Viti stack CRD", err,
+			rlog.String("name", vitistackName))
 		return
 	}
 
 	// Re-check the providers (in case they changed while we were switching locks)
 	providers, found, err = unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
-		rlog.Error("Failed to get providers from datacenter", err,
+		rlog.Error("Failed to get providers from vitistack", err,
 			rlog.String("providerType", providerType))
 		return
 	}
 
 	if !found || len(providers) == 0 {
-		rlog.Info("No providers found in datacenter to remove",
+		rlog.Info("No providers found in vitistack to remove",
 			rlog.String("providerType", providerType),
-			rlog.String("datacenter", datacenterName))
+			rlog.String("vitistack", vitistackName))
 		return
 	}
 
@@ -573,27 +573,27 @@ func removeProviderFromDatacenter(datacenterObj *unstructured.Unstructured, prov
 		// Update the unstructured object
 		err = unstructured.SetNestedStringSlice(latestObj.Object, providers, "spec", providerType)
 		if err != nil {
-			rlog.Error("Failed to update providers in datacenter", err,
+			rlog.Error("Failed to update providers in vitistack", err,
 				rlog.String("providerType", providerType))
 			return
 		}
 
-		// Update the datacenter resource
-		_, err = clients.DynamicClient.Resource(datacenterGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
+		// Update the vitistack resource
+		_, err = clients.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
 		if err != nil {
-			rlog.Error("Failed to update Datacenter CRD after removal", err,
-				rlog.String("name", datacenterName))
+			rlog.Error("Failed to update Viti stack CRD after removal", err,
+				rlog.String("name", vitistackName))
 			return
 		}
 
-		rlog.Info("Removed provider from Datacenter CRD",
-			rlog.String("name", datacenterName),
+		rlog.Info("Removed provider from Viti stack CRD",
+			rlog.String("name", vitistackName),
 			rlog.String("providerType", providerType),
 			rlog.String("provider", providerName))
 	} else {
-		rlog.Info("Provider not found in Datacenter, no removal needed",
+		rlog.Info("Provider not found in Viti stack, no removal needed",
 			rlog.String("providerType", providerType),
 			rlog.String("provider", providerName),
-			rlog.String("datacenter", datacenterName))
+			rlog.String("vitistack", vitistackName))
 	}
 }

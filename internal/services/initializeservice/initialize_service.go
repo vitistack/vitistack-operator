@@ -7,8 +7,8 @@ import (
 
 	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/spf13/viper"
-	"github.com/vitistack/datacenter-operator/internal/clients"
-	"github.com/vitistack/datacenter-operator/pkg/consts"
+	"github.com/vitistack/vitistack-operator/internal/clients"
+	"github.com/vitistack/vitistack-operator/pkg/consts"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -80,7 +80,7 @@ func CheckCRDs() {
 			errors = append(errors, "No resources found for the required CRDs")
 		} else {
 			// Check for each required CRD
-			requiredCRDs := []string{"KubernetesProvider", "MachineProvider", "Datacenter"}
+			requiredCRDs := []string{"KubernetesProvider", "MachineProvider", "Vitistack"}
 			for _, crdKind := range requiredCRDs {
 				if !crdExists(resources, crdKind) {
 					errors = append(errors, fmt.Sprintf("%s CRD is not installed", crdKind))

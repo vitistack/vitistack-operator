@@ -2,7 +2,7 @@ package settings
 
 import (
 	"github.com/spf13/viper"
-	"github.com/vitistack/datacenter-operator/pkg/consts"
+	"github.com/vitistack/vitistack-operator/pkg/consts"
 )
 
 var (
@@ -12,8 +12,8 @@ var (
 
 func Init() {
 	// Initialize settings here
-	viper.SetDefault(consts.DATACENTERCRDNAME, "datacenter")
-	viper.SetDefault(consts.CONFIGMAPNAME, "datacenter-config")
+	viper.SetDefault(consts.VITISTACKCRDNAME, "vitistack")
+	viper.SetDefault(consts.CONFIGMAPNAME, "vitistack-config")
 	viper.SetDefault(consts.NAMESPACE, "default")
 	viper.SetDefault(consts.DEVELOPMENT, false)
 	viper.SetDefault(consts.REGION, "Norway")

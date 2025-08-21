@@ -5,11 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Datacenter operator",
+      "name": "Debug Vitistack operator",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/cmd/datacenter-operator/main.go",
+  "program": "${workspaceFolder}/cmd/vitistack-operator/main.go",
       "args": [],
       "env": {
         "GO_ENV": "development",

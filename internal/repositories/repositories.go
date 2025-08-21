@@ -2,9 +2,9 @@ package repositories
 
 import (
 	"github.com/vitistack/crds/pkg/v1alpha1"
-	"github.com/vitistack/datacenter-operator/internal/repositories/kubernetesproviderrepository"
-	"github.com/vitistack/datacenter-operator/internal/repositories/machineproviderrepository"
-	"github.com/vitistack/datacenter-operator/internal/repositoryinterfaces"
+	"github.com/vitistack/vitistack-operator/internal/repositories/kubernetesproviderrepository"
+	"github.com/vitistack/vitistack-operator/internal/repositories/machineproviderrepository"
+	"github.com/vitistack/vitistack-operator/internal/repositoryinterfaces"
 )
 
 var (

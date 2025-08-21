@@ -32,7 +32,7 @@ updates:
 
   # Maintain dependencies for Helm charts
   - package-ecosystem: "github-actions"
-    directory: "/charts/datacenter-operator/"
+    directory: "/charts/vitistack-operator/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10

@@ -1,6 +1,6 @@
-# datacenter-operator
+# vitistack-operator
 
-API for centralizing data for datacenter infrastructure.
+This operator provides an API for centralizing data for viti stack infrastructure.
 
 ## Prerequsites
 
@@ -8,7 +8,7 @@ API for centralizing data for datacenter infrastructure.
 
 ## Run
 
-`go run cmd/datacenter-operator/main.go`
+`go run cmd/vitistack-operator/main.go`
 
 ## Debug
 
@@ -18,5 +18,5 @@ API for centralizing data for datacenter infrastructure.
 
 ## Build a OCI container
 
-- Build binary with `CGO_ENABLED=0 go build -o dist/datacenter-operator -ldflags '-w -extldflags "-static"' cmd/datacenter-operator/main.go`
+- Build binary with `CGO_ENABLED=0 go build -o dist/vitistack-operator -ldflags '-w -extldflags "-static"' cmd/vitistack-operator/main.go`
 - Build the oci image: `docker build .`

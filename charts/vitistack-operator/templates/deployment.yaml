@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "datacenter-operator.fullname" . }}
+  name: {{ include "vitistack-operator.fullname" . }}
   labels:
-    {{- include "datacenter-operator.labels" . | nindent 4 }}
+    {{- include "vitistack-operator.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "datacenter-operator.selectorLabels" . | nindent 6 }}
+      {{- include "vitistack-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "datacenter-operator.labels" . | nindent 8 }}
+        {{- include "vitistack-operator.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -27,7 +27,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "datacenter-operator.serviceAccountName" . }}
+      serviceAccountName: {{ include "vitistack-operator.serviceAccountName" . }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -41,10 +41,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: DATACENTERCRDNAME
-              value: {{ .Values.config.datacenterCrdName | default "datacenter" | quote }}
+            - name: VITISTACKCRDNAME
+              value: {{ .Values.config.vitistackCrdName | default "vitistack" | quote }}
             - name: CONFIGMAPNAME
-              value: {{ .Values.config.configMapName | default "datacenter-config" | quote }}
+              value: {{ .Values.config.configMapName | default "vitistack-config" | quote }}
             - name: NAMESPACE
               value: {{ .Release.Namespace | quote }}
             - name: DEVELOPMENT

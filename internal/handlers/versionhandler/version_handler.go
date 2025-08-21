@@ -3,8 +3,8 @@ package versionhandler
 import (
 	"net/http"
 
-	"github.com/vitistack/datacenter-operator/internal/helpers/httphelpers"
-	"github.com/vitistack/datacenter-operator/internal/settings"
+	"github.com/vitistack/vitistack-operator/internal/helpers/httphelpers"
+	"github.com/vitistack/vitistack-operator/internal/settings"
 )
 
 func GetVersion(w http.ResponseWriter, r *http.Request) {

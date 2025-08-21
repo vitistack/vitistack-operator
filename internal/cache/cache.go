@@ -10,14 +10,14 @@ import (
 	"github.com/NorskHelsenett/ror/pkg/helpers/kvcachehelper/memorycache"
 )
 
-var Cache *DatacenterCache
+var Cache *VitistackCache
 
-type DatacenterCache struct {
+type VitistackCache struct {
 	cacheLayer kvcachehelper.CacheInterface
 }
 
-func (dccache DatacenterCache) NewDatacenterCache() (*DatacenterCache, error) {
-	dccache = DatacenterCache{
+func (dccache VitistackCache) NewVitistackCache() (*VitistackCache, error) {
+	dccache = VitistackCache{
 		cacheLayer: memorycache.NewKvCache(kvcachehelper.CacheOptions{
 			Timeout: time.Hour * 6,
 		}),
@@ -25,12 +25,12 @@ func (dccache DatacenterCache) NewDatacenterCache() (*DatacenterCache, error) {
 	return &dccache, nil
 }
 
-func (dccache DatacenterCache) Get(ctx context.Context, key string) (string, error) {
+func (dccache VitistackCache) Get(ctx context.Context, key string) (string, error) {
 	value, _ := dccache.cacheLayer.Get(ctx, key)
 	return value, nil
 }
 
-func (dccache DatacenterCache) Set(ctx context.Context, key string, value any) error {
+func (dccache VitistackCache) Set(ctx context.Context, key string, value any) error {
 	stringvalue, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func (dccache DatacenterCache) Set(ctx context.Context, key string, value any) e
 	return nil
 }
 
-func (dccache DatacenterCache) Delete(ctx context.Context, key string) error {
+func (dccache VitistackCache) Delete(ctx context.Context, key string) error {
 	ok := dccache.cacheLayer.Remove(ctx, key)
 	if !ok {
 		return errors.New("could not delete key")
@@ -47,7 +47,7 @@ func (dccache DatacenterCache) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (dccache DatacenterCache) Keys(ctx context.Context) ([]string, error) {
+func (dccache VitistackCache) Keys(ctx context.Context) ([]string, error) {
 	keys, err := dccache.cacheLayer.Keys(ctx)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (dccache DatacenterCache) Keys(ctx context.Context) ([]string, error) {
 	return keys, nil
 }
 
-func (dccache DatacenterCache) GetByKey(ctx context.Context, key string) (string, error) {
+func (dccache VitistackCache) GetByKey(ctx context.Context, key string) (string, error) {
 	value, ok := dccache.cacheLayer.Get(ctx, key)
 	if !ok {
 		return "", errors.New("key not found")

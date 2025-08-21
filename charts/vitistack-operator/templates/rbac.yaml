@@ -2,32 +2,32 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "datacenter-operator.fullname" . }}
+  name: {{ include "vitistack-operator.fullname" . }}
   labels:
-    {{- include "datacenter-operator.labels" . | nindent 4 }}
+    {{- include "vitistack-operator.labels" . | nindent 4 }}
 rules:
 - apiGroups: [""]
   resources: ["configmaps"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["vitistack.io"]
-  resources: ["kubernetesproviders", "machineproviders", "datacenters", "kubernetesclusters", "machines"]
+  resources: ["kubernetesproviders", "machineproviders", "vitistacks", "kubernetesclusters", "machines"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["vitistack.io"]
-  resources: ["kubernetesproviders/status", "machineproviders/status", "datacenters/status", "kubernetesclusters/status", "machines/status"]
+  resources: ["kubernetesproviders/status", "machineproviders/status", "vitistacks/status", "kubernetesclusters/status", "machines/status"]
   verbs: ["get", "update", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "datacenter-operator.fullname" . }}
+  name: {{ include "vitistack-operator.fullname" . }}
   labels:
-    {{- include "datacenter-operator.labels" . | nindent 4 }}
+    {{- include "vitistack-operator.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "datacenter-operator.fullname" . }}
+  name: {{ include "vitistack-operator.fullname" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "datacenter-operator.serviceAccountName" . }}
+  name: {{ include "vitistack-operator.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 {{- end }}

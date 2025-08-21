@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/NorskHelsenett/ror/pkg/rlog"
-	"github.com/vitistack/datacenter-operator/internal/cache"
-	"github.com/vitistack/datacenter-operator/internal/clients/dynamicclienthandler"
-	"github.com/vitistack/datacenter-operator/pkg/eventmanager"
+	"github.com/vitistack/vitistack-operator/internal/cache"
+	"github.com/vitistack/vitistack-operator/internal/clients/dynamicclienthandler"
+	"github.com/vitistack/vitistack-operator/pkg/eventmanager"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 

@@ -1,4 +1,4 @@
-package datacenternameservice
+package vitistacknameservice
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 
 	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/spf13/viper"
-	"github.com/vitistack/datacenter-operator/internal/cache"
-	"github.com/vitistack/datacenter-operator/internal/clients"
-	"github.com/vitistack/datacenter-operator/pkg/consts"
+	"github.com/vitistack/vitistack-operator/internal/cache"
+	"github.com/vitistack/vitistack-operator/internal/clients"
+	"github.com/vitistack/vitistack-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

@@ -1,14 +1,14 @@
-# Makefile for datacenter-operator
+# Makefile for vitistack-operator
 
 # Variables
-BINARY_NAME=datacenter-operator
+BINARY_NAME=vitistack-operator
 GO=go
 GOFMT=gofmt
 DOCKER=docker
 KUBECTL=kubectl
-DOCKER_IMAGE=ghcr.io/vitistack/datacenter-operator
+DOCKER_IMAGE=ghcr.io/vitistack/vitistack-operator
 DOCKER_TAG=latest
-MAIN_PATH=./cmd/datacenter-operator/main.go
+MAIN_PATH=./cmd/vitistack-operator/main.go
 
 NAMESPACE=default
 POD ?= $(shell kubectl -n $(NAMESPACE) get pods -o jsonpath='{.items[0].metadata.name}')
@@ -127,7 +127,7 @@ install-gosec: ## Install gosec security scanner
 
 helm-install: check-kubectl ## Install Helm chart with CRDs
 	@echo "${GREEN}Installing Helm chart with CRDs...${RESET}"
-	helm upgrade --install datacenter-operator ./charts/datacenter-operator --namespace default
+	helm upgrade --install vitistack-operator ./charts/vitistack-operator --namespace default
 
 ##@ Dependencies
 .PHONY: deps update-deps
@@ -183,12 +183,12 @@ k8s-download-viti-crds: ## Download CRDs from private repository (requires GITHU
 		exit 1; \
 	fi
 	@mkdir -p hack/crds
-	@echo "Downloading vitistack.io_datacenters.yaml..."
+	@echo "Downloading vitistack.io_vitistacks.yaml..."
 	@if ! curl --fail -H "Authorization: token $$GITHUB_TOKEN" \
 		-H "Accept: application/vnd.github.v3.raw" \
-		-o hack/crds/vitistack.io_datacenters.yaml \
-		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_datacenters.yaml; then \
-		echo "${RED}Error: Failed to download vitistack.io_datacenters.yaml${RESET}"; \
+		-o hack/crds/vitistack.io_vitistacks.yaml \
+		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_vitistacks.yaml; then \
+		echo "${RED}Error: Failed to download vitistack.io_dvitistacks.yaml${RESET}"; \
 		exit 1; \
 	fi
 	@echo "Downloading vitistack.io_kubernetesproviders.yaml..."

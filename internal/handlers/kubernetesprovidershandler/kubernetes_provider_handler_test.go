@@ -9,9 +9,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/vitistack/crds/pkg/v1alpha1"
-	"github.com/vitistack/datacenter-operator/internal/cache"
-	"github.com/vitistack/datacenter-operator/internal/handlers/kubernetesprovidershandler"
-	"github.com/vitistack/datacenter-operator/internal/repositories"
+	"github.com/vitistack/vitistack-operator/internal/cache"
+	"github.com/vitistack/vitistack-operator/internal/handlers/kubernetesprovidershandler"
+	"github.com/vitistack/vitistack-operator/internal/repositories"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -67,7 +67,7 @@ func (m *MockKubernetesProviderRepository) GetKubernetesProviderByName(ctx conte
 
 func TestGetKubernetesProviderByUID(t *testing.T) {
 	// Mock the cache
-	mockCache := cache.NewMockDatacenterCache()
+	mockCache := cache.NewMockVitistackCache()
 	cache.Cache = mockCache
 
 	// Set up valid UUID in cache

@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: datacenter-config
+  name: vitistack-config
 data:
-  # Required configuration keys for the datacenter-operator
-  name: "test-datacenter"
+  # Required configuration keys for the vitistack-operator
+  name: "test-stack"
   provider: "test-provider"
-  description: "Test datacenter"
+  description: "Testing viti stack"
   region: "test-region"
   location: "test-country"
   zone: "test-zone"
