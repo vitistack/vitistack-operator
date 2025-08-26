@@ -3,8 +3,8 @@ module github.com/vitistack/vitistack-operator
 go 1.25.0
 
 require (
-	github.com/NorskHelsenett/ror v1.4.1
-	github.com/vitistack/crds v0.0.1-alpha22
+	github.com/NorskHelsenett/ror v1.4.2
+	github.com/vitistack/crds v0.0.1-alpha24
 	k8s.io/apimachinery v0.33.4
 	k8s.io/client-go v0.33.4
 )
@@ -17,7 +17,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.10 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
 	github.com/gin-gonic/gin v1.10.1 // indirect
 	github.com/go-co-op/gocron v1.37.0 // indirect
