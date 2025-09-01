@@ -11,53 +11,8 @@ permissions:
   packages: read
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/vitistack
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure Git for private repos
-        run: |
-          git config --global url.https://$GH_TOKEN@github.com/.insteadOf https://github.com/
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-          cache-dependency-path: go.sum
-
-      - name: Install dependencies
-        run: |
-          go mod download
-        env:
-          GOPRIVATE: github.com/vitistack
-          GOPROXY: https://proxy.golang.org,direct
-          GOSUMDB: sum.golang.org
-
-      - name: Build
-        run: |
-          VERSION="${{ github.ref_type == 'tag' && github.ref_name || '0.0.0' }}"
-          VERSION="${VERSION#v*}"
-          echo "Version $VERSION"
-          make build
-          touch cmd/isbuilt
-
-      - name: Cache build artifacts
-        uses: actions/cache@v4
-        with:
-          path: bin/
-          key: ${{ runner.os }}-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-
-  test:
-    name: Test
+  build-test-checksecurity:
+    name: Build test and check security
     runs-on: ubuntu-latest
     env:
       GOPRIVATE: github.com/vitistack
@@ -89,9 +44,25 @@ jobs:
         run: |
           go mod download
         env:
-          GOPRIVATE: github.com/vitistack/*
+          GOPRIVATE: github.com/vitistack
           GOPROXY: https://proxy.golang.org,direct
           GOSUMDB: sum.golang.org
+
+      - name: Build
+        run: |
+          VERSION="${{ github.ref_type == 'tag' && github.ref_name || '0.0.0' }}"
+          VERSION="${VERSION#v*}"
+          echo "Version $VERSION"
+          make build
+          touch cmd/isbuilt
+
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: bin/
+          key: ${{ runner.os }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-
 
       - name: Setup test environment
         run: |
@@ -108,35 +79,6 @@ jobs:
           name: coverage
           path: coverage.out
           retention-days: 7
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/vitistack
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure Git for private repos
-        run: |
-          git config --global url.https://$GH_TOKEN@github.com/.insteadOf https://github.com/
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-          cache-dependency-path: go.sum
-
-      - name: Install dependencies
-        run: |
-          go mod download
-        env:
-          GOPRIVATE: github.com/vitistack/*
-          GOPROXY: https://proxy.golang.org,direct
-          GOSUMDB: sum.golang.org
 
       - name: Run security scan
         uses: golang/govulncheck-action@v1
