@@ -20,7 +20,7 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
-// main is the entrypoint for the vitistack-operator binary
+// main is the entrypoint for the vitistack-operator binary.
 func main() {
 	_, _ = maxprocs.Set(maxprocs.Logger(rlog.Infof))
 	cancelChan := make(chan os.Signal, 1)
