@@ -24,7 +24,7 @@ func Start() {
 		host = ""
 	}
 
-	port := "8888"
+	port := "9991"
 	url := fmt.Sprintf("%s:%s", host, port)
 	server := &http.Server{
 		Handler:      router,
