@@ -3,14 +3,16 @@ module github.com/vitistack/vitistack-operator
 go 1.25.0
 
 require (
-	github.com/NorskHelsenett/ror v1.4.14
-	github.com/vitistack/crds v0.0.1-alpha29
+	github.com/NorskHelsenett/ror v1.4.15
+	github.com/vitistack/crds v0.0.1-alpha30
 	k8s.io/apimachinery v0.34.0
 	k8s.io/client-go v0.34.0
 )
 
+require github.com/bytedance/gopkg v0.1.3 // indirect
+
 require (
-	github.com/bytedance/sonic v1.14.0 // indirect
+	github.com/bytedance/sonic v1.14.1 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
