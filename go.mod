@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/NorskHelsenett/ror v1.4.15
-	github.com/vitistack/crds v0.0.1-alpha30
+	github.com/vitistack/crds v0.0.1-alpha31
 	k8s.io/apimachinery v0.34.0
 	k8s.io/client-go v0.34.0
 )
@@ -65,7 +65,7 @@ require (
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
-	github.com/spf13/pflag v1.0.9 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spf13/viper v1.20.1
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
@@ -94,7 +94,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.34.0
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20250814151709-d7b6acb124c3 // indirect
+	k8s.io/kube-openapi v0.0.0-20250902184714-7fc278399c7f // indirect
 	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d // indirect
 	sigs.k8s.io/controller-runtime v0.22.0
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
