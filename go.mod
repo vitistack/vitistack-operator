@@ -1,15 +1,18 @@
 module github.com/vitistack/vitistack-operator
 
-go 1.25.0
+go 1.25.1
 
 require (
 	github.com/NorskHelsenett/ror v1.4.15
-	github.com/vitistack/crds v0.0.1-alpha31
+	github.com/vitistack/crds v0.0.1
 	k8s.io/apimachinery v0.34.0
 	k8s.io/client-go v0.34.0
 )
 
-require github.com/bytedance/gopkg v0.1.3 // indirect
+require (
+	github.com/bytedance/gopkg v0.1.3 // indirect
+	github.com/go-logr/zapr v1.3.0 // indirect
+)
 
 require (
 	github.com/bytedance/sonic v1.14.1 // indirect
@@ -70,6 +73,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
+	github.com/vitistack/common v0.0.1
 	github.com/x448/float16 v0.8.4 // indirect
 	go.mongodb.org/mongo-driver v1.17.4 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect

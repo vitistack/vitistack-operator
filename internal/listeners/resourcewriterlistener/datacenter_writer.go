@@ -5,8 +5,8 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/spf13/viper"
+	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/vitistack-operator/internal/clients"
 	"github.com/vitistack/vitistack-operator/internal/services/vitistacknameservice"
 	"github.com/vitistack/vitistack-operator/pkg/consts"
@@ -49,10 +49,10 @@ func handleMachineProviderEvents(event eventmanager.ResourceEvent) {
 }
 
 func handleConfigMapEvents(event eventmanager.ResourceEvent) {
-	rlog.Info("Received ConfigMap event",
-		rlog.String("type", string(event.Type)),
-		rlog.String("name", event.Resource.GetName()),
-		rlog.String("namespace", event.Resource.GetNamespace()))
+	vlog.Info("Received ConfigMap event",
+		"type: ", string(event.Type),
+		"name: ", event.Resource.GetName(),
+		"namespace: ", event.Resource.GetNamespace())
 
 	configMapName := viper.GetString(consts.CONFIGMAPNAME)
 	if event.Resource.GetName() != configMapName {
@@ -63,7 +63,7 @@ func handleConfigMapEvents(event eventmanager.ResourceEvent) {
 	namespace := event.Resource.GetNamespace()
 	err := vitistacknameservice.InvalidateCache(context.TODO(), namespace, configMapName)
 	if err != nil {
-		rlog.Error("Failed to invalidate ConfigMap cache", err)
+		vlog.Error("Failed to invalidate ConfigMap cache", err)
 	}
 
 	updateVitistack(event)
@@ -71,7 +71,7 @@ func handleConfigMapEvents(event eventmanager.ResourceEvent) {
 
 func updateVitistack(event eventmanager.ResourceEvent) {
 	if event.Resource.Object == nil {
-		rlog.Error("Resource object is nil", nil)
+		vlog.Error("Resource object is nil", nil)
 		return
 	}
 
@@ -88,11 +88,11 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 	// Extract ConfigMap data from the event
 	configMapData, exists, err := unstructured.NestedStringMap(event.Resource.Object, "data")
 	if err != nil {
-		rlog.Error("Failed to extract ConfigMap data", err)
+		vlog.Error("Failed to extract ConfigMap data", err)
 		return
 	}
 	if !exists || configMapData == nil {
-		rlog.Error("ConfigMap data not found", nil)
+		vlog.Error("ConfigMap data not found", nil)
 		return
 	}
 
@@ -104,15 +104,15 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 	provider := configMapData["provider"]
 	description := configMapData["description"]
 
-	rlog.Info("Processing ConfigMap update for Vitistack",
-		rlog.String("vitistackName", vitistackName),
-		rlog.String("region", region),
-		rlog.String("zone", zone),
-		rlog.String("location", location),
-		rlog.String("provider", provider))
+	vlog.Info("Processing ConfigMap update for Vitistack",
+		"vitistackName: ", vitistackName,
+		"region: ", region,
+		"zone: ", zone,
+		"location: ", location,
+		"provider: ", provider)
 
 	if vitistackName == "" {
-		rlog.Error("Vitistack name is empty in ConfigMap", nil)
+		vlog.Error("Vitistack name is empty in ConfigMap", nil)
 		return
 	}
 
@@ -124,9 +124,9 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 		// If the vitistack doesn't exist, we need to create it
 		_, err = getOrCreateVitistackCrd(vitistackCrdName, "", "")
 		if err != nil {
-			rlog.Error("Failed to get or create Viti stack CRD", err,
-				rlog.String("name", event.Resource.GetName()),
-				rlog.String("namespace", event.Resource.GetNamespace()))
+			vlog.Error("Failed to get or create Viti stack CRD", err,
+				"name", event.Resource.GetName(),
+				"namespace", event.Resource.GetNamespace())
 			return
 		}
 		// Get the newly created vitistack object
@@ -134,7 +134,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 		vitistackObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackCrdName, metav1.GetOptions{})
 		vitistackRWMutex.RUnlock()
 		if err != nil {
-			rlog.Error("Failed to get newly created Viti stack CRD", err)
+			vlog.Error("Failed to get newly created Viti stack CRD", err)
 			return
 		}
 	}
@@ -146,7 +146,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 	if vitistackName != "" {
 		err = unstructured.SetNestedField(vitistackObj.Object, vitistackName, "spec", "displayName")
 		if err != nil {
-			rlog.Error("Failed to set Viti stack displayName", err)
+			vlog.Error("Failed to set Viti stack displayName", err)
 			return
 		}
 		updateNeeded = true
@@ -156,7 +156,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 	if region != "" {
 		err = unstructured.SetNestedField(vitistackObj.Object, region, "spec", "region")
 		if err != nil {
-			rlog.Error("Failed to set Viti stack region", err)
+			vlog.Error("Failed to set Viti stack region", err)
 			return
 		}
 		updateNeeded = true
@@ -166,7 +166,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 	if zone != "" {
 		err = unstructured.SetNestedField(vitistackObj.Object, zone, "spec", "zone")
 		if err != nil {
-			rlog.Error("Failed to set Viti stack zone", err)
+			vlog.Error("Failed to set Viti stack zone", err)
 			return
 		}
 		updateNeeded = true
@@ -179,7 +179,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 		}
 		err = unstructured.SetNestedField(vitistackObj.Object, locationObj, "spec", "location")
 		if err != nil {
-			rlog.Error("Failed to set Viti stack location", err)
+			vlog.Error("Failed to set Viti stack location", err)
 			return
 		}
 		updateNeeded = true
@@ -189,7 +189,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 	if description != "" {
 		err = unstructured.SetNestedField(vitistackObj.Object, description, "spec", "description")
 		if err != nil {
-			rlog.Error("Failed to set Viti stack description", err)
+			vlog.Error("Failed to set Viti stack description", err)
 			return
 		}
 		updateNeeded = true
@@ -197,26 +197,26 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 
 	// Only update if changes were made
 	if !updateNeeded {
-		rlog.Info("No updates needed for Viti stack CRD")
+		vlog.Info("No updates needed for Viti stack CRD")
 		return
 	}
 
 	// Update the vitistack object
 	_, err = clients.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), vitistackObj, metav1.UpdateOptions{})
 	if err != nil {
-		rlog.Error("Failed to update Viti stack CRD", err,
-			rlog.String("name", event.Resource.GetName()),
-			rlog.String("namespace", event.Resource.GetNamespace()))
+		vlog.Error("Failed to update Viti stack CRD", err,
+			"name", event.Resource.GetName(),
+			"namespace", event.Resource.GetNamespace())
 		return
 	}
 
-	rlog.Info("Updated Viti stack CRD from ConfigMap",
-		rlog.String("vitistackName", vitistackName),
-		rlog.String("region", region),
-		rlog.String("zone", zone),
-		rlog.String("location", location),
-		rlog.String("provider", provider),
-		rlog.String("namespace", event.Resource.GetNamespace()))
+	vlog.Info("Updated Viti stack CRD from ConfigMap",
+		"vitistackName: ", vitistackName,
+		"region: ", region,
+		"zone: ", zone,
+		"location: ", location,
+		"provider: ", provider,
+		"namespace: ", event.Resource.GetNamespace())
 }
 
 // updateVitistackWithProvider handles updating the Viti stack CRD with provider information
@@ -224,25 +224,25 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 func updateVitistackWithProvider(event eventmanager.ResourceEvent, providerType string) {
 	// Use the shared dynamic client
 	if clients.DynamicClient == nil {
-		rlog.Error("Dynamic client is not initialized", nil)
+		vlog.Error("Dynamic client is not initialized", nil)
 		return
 	}
 
 	providerName := event.Resource.GetName()
 	namespace := event.Resource.GetNamespace()
 
-	rlog.Info("Processing provider event",
-		rlog.String("type", string(event.Type)),
-		rlog.String("providerType", providerType),
-		rlog.String("name", providerName),
-		rlog.String("namespace", namespace))
+	vlog.Info("Processing provider event",
+		"type: ", string(event.Type),
+		"providerType: ", providerType,
+		"name: ", providerName,
+		"namespace: ", namespace)
 
 	// Get or create the vitistack CRD
 	vitistackCrdName := viper.GetString(consts.VITISTACKCRDNAME)
 	vitistackObj, err := getOrCreateVitistackCrd(vitistackCrdName, providerName, providerType)
 	if err != nil {
-		rlog.Error("Failed to get or create Viti stack CRD", err,
-			rlog.String("name", vitistackCrdName))
+		vlog.Error("Failed to get or create Viti stack CRD", err,
+			"name: ", vitistackCrdName)
 		return
 	}
 
@@ -253,7 +253,7 @@ func updateVitistackWithProvider(event eventmanager.ResourceEvent, providerType 
 	case eventmanager.EventDelete:
 		removeProviderFromVitistack(vitistackObj, providerName, providerType)
 	default:
-		rlog.Info("Unhandled event type", rlog.String("type", string(event.Type)))
+		vlog.Info("Unhandled event type", "type: ", string(event.Type))
 	}
 }
 
@@ -338,8 +338,8 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 		return nil, err
 	}
 
-	rlog.Info("Created new Vitistack CRD",
-		rlog.String("name", name))
+	vlog.Info("Created new Vitistack CRD",
+		"name: ", name)
 
 	return createdObj, nil
 }
@@ -350,7 +350,7 @@ func getVitistackInfoFromConfigMap() (name, region, location, zone string) {
 	ctx := context.TODO()
 	vitistackName, err := vitistacknameservice.GetName(ctx)
 	if err != nil {
-		rlog.Error("Failed to get vitistack name from service", err)
+		vlog.Error("Failed to get vitistack name from service", err)
 		vitistackName = ""
 	}
 
@@ -368,7 +368,7 @@ func getVitistackInfoFromConfigMap() (name, region, location, zone string) {
 			location = configMap.Data["location"]
 			zone = configMap.Data["zone"]
 		} else {
-			rlog.Error("Failed to get ConfigMap for vitistack info", err)
+			vlog.Error("Failed to get ConfigMap for vitistack info", err)
 		}
 	}
 
@@ -385,8 +385,8 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 	latestObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
 		vitistackRWMutex.RUnlock()
-		rlog.Error("Failed to get Vitistack CRD", err,
-			rlog.String("name", vitistackName))
+		vlog.Error("Failed to get Vitistack CRD", err,
+			"name: ", vitistackName)
 		return
 	}
 
@@ -394,8 +394,8 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 	providers, found, err := unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
 		vitistackRWMutex.RUnlock()
-		rlog.Error("Failed to get providers from vitistack", err,
-			rlog.String("providerType", providerType))
+		vlog.Error("Failed to get providers from vitistack", err,
+			"providerType: ", providerType)
 		return
 	}
 
@@ -407,10 +407,10 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 	// If provider already exists, just log and return (no need for a write lock)
 	if providerExists {
 		vitistackRWMutex.RUnlock()
-		rlog.Info("Provider already exists in Viti stack, no update needed",
-			rlog.String("providerType", providerType),
-			rlog.String("provider", providerName),
-			rlog.String("vitistack", vitistackName))
+		vlog.Info("Provider already exists in Viti stack, no update needed",
+			"providerType: ", providerType,
+			"provider: ", providerName,
+			"vitistack: ", vitistackName)
 		return
 	}
 
@@ -425,16 +425,16 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 	// This ensures we're working with current data even if it changed while we were waiting for the lock
 	latestObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
-		rlog.Error("Failed to get updated Vitistack CRD", err,
-			rlog.String("name", vitistackName))
+		vlog.Error("Failed to get updated Vitistack CRD", err,
+			"name: ", vitistackName)
 		return
 	}
 
 	// Re-check if provider exists (in case it was added while we were switching locks)
 	providers, found, err = unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
-		rlog.Error("Failed to get providers from vitistack", err,
-			rlog.String("providerType", providerType))
+		vlog.Error("Failed to get providers from vitistack", err,
+			"providerType: ", providerType)
 		return
 	}
 
@@ -450,28 +450,28 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 		// Update the unstructured object
 		err = unstructured.SetNestedStringSlice(latestObj.Object, providers, "spec", providerType)
 		if err != nil {
-			rlog.Error("Failed to set providers in vitistack", err,
-				rlog.String("providerType", providerType))
+			vlog.Error("Failed to set providers in vitistack", err,
+				"providerType: ", providerType)
 			return
 		}
 
 		// Update the vitistack resource
 		_, err = clients.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
 		if err != nil {
-			rlog.Error("Failed to update Viti stack CRD", err,
-				rlog.String("name", vitistackName))
+			vlog.Error("Failed to update Viti stack CRD", err,
+				"name: ", vitistackName)
 			return
 		}
 
-		rlog.Info("Updated Viti stack CRD with provider",
-			rlog.String("name", vitistackName),
-			rlog.String("providerType", providerType),
-			rlog.String("provider", providerName))
+		vlog.Info("Updated Viti stack CRD with provider",
+			"name: ", vitistackName,
+			"providerType: ", providerType,
+			"provider: ", providerName)
 	} else {
-		rlog.Info("Provider already exists in Viti stack, no update needed",
-			rlog.String("providerType", providerType),
-			rlog.String("provider", providerName),
-			rlog.String("vitistack", vitistackName))
+		vlog.Info("Provider already exists in Viti stack, no update needed",
+			"providerType: ", providerType,
+			"provider: ", providerName,
+			"vitistack: ", vitistackName)
 	}
 }
 
@@ -485,8 +485,8 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 	latestObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
 		vitistackRWMutex.RUnlock()
-		rlog.Error("Failed to get Viti stack CRD", err,
-			rlog.String("name", vitistackName))
+		vlog.Error("Failed to get Viti stack CRD", err,
+			"name: ", vitistackName)
 		return
 	}
 
@@ -494,17 +494,17 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 	providers, found, err := unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
 		vitistackRWMutex.RUnlock()
-		rlog.Error("Failed to get providers from vitistack", err,
-			rlog.String("providerType", providerType))
+		vlog.Error("Failed to get providers from vitistack", err,
+			"providerType: ", providerType)
 		return
 	}
 
 	if !found || len(providers) == 0 {
 		// Nothing to remove
 		vitistackRWMutex.RUnlock()
-		rlog.Info("No providers found in vitistack to remove",
-			rlog.String("providerType", providerType),
-			rlog.String("vitistack", vitistackName))
+		vlog.Info("No providers found in vitistack to remove",
+			"providerType: ", providerType,
+			"vitistack: ", vitistackName)
 		return
 	}
 
@@ -520,10 +520,10 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 	// If provider doesn't exist, just log and return (no need for a write lock)
 	if providerIndex < 0 {
 		vitistackRWMutex.RUnlock()
-		rlog.Info("Provider not found in Viti stack, no removal needed",
-			rlog.String("providerType", providerType),
-			rlog.String("provider", providerName),
-			rlog.String("vitistack", vitistackName))
+		vlog.Info("Provider not found in Viti stack, no removal needed",
+			"providerType: ", providerType,
+			"provider: ", providerName,
+			"vitistack: ", vitistackName)
 		return
 	}
 
@@ -537,23 +537,23 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 	// Get the latest version again after acquiring the write lock
 	latestObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
-		rlog.Error("Failed to get updated Viti stack CRD", err,
-			rlog.String("name", vitistackName))
+		vlog.Error("Failed to get updated Viti stack CRD", err,
+			"name: ", vitistackName)
 		return
 	}
 
 	// Re-check the providers (in case they changed while we were switching locks)
 	providers, found, err = unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
-		rlog.Error("Failed to get providers from vitistack", err,
-			rlog.String("providerType", providerType))
+		vlog.Error("Failed to get providers from vitistack", err,
+			"providerType: ", providerType)
 		return
 	}
 
 	if !found || len(providers) == 0 {
-		rlog.Info("No providers found in vitistack to remove",
-			rlog.String("providerType", providerType),
-			rlog.String("vitistack", vitistackName))
+		vlog.Info("No providers found in vitistack to remove",
+			"providerType: ", providerType,
+			"vitistack: ", vitistackName)
 		return
 	}
 
@@ -573,27 +573,27 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 		// Update the unstructured object
 		err = unstructured.SetNestedStringSlice(latestObj.Object, providers, "spec", providerType)
 		if err != nil {
-			rlog.Error("Failed to update providers in vitistack", err,
-				rlog.String("providerType", providerType))
+			vlog.Error("Failed to update providers in vitistack", err,
+				"providerType: ", providerType)
 			return
 		}
 
 		// Update the vitistack resource
 		_, err = clients.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
 		if err != nil {
-			rlog.Error("Failed to update Viti stack CRD after removal", err,
-				rlog.String("name", vitistackName))
+			vlog.Error("Failed to update Viti stack CRD after removal", err,
+				"name: ", vitistackName)
 			return
 		}
 
-		rlog.Info("Removed provider from Viti stack CRD",
-			rlog.String("name", vitistackName),
-			rlog.String("providerType", providerType),
-			rlog.String("provider", providerName))
+		vlog.Info("Removed provider from Viti stack CRD",
+			"name: ", vitistackName,
+			"providerType: ", providerType,
+			"provider: ", providerName)
 	} else {
-		rlog.Info("Provider not found in Viti stack, no removal needed",
-			rlog.String("providerType", providerType),
-			rlog.String("provider", providerName),
-			rlog.String("vitistack", vitistackName))
+		vlog.Info("Provider not found in Viti stack, no removal needed",
+			"providerType: ", providerType,
+			"provider: ", providerName,
+			"vitistack: ", vitistackName)
 	}
 }

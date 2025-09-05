@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
+	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/vitistack-operator/internal/routes"
 	"github.com/vitistack/vitistack-operator/pkg/consts"
 )
@@ -18,9 +18,9 @@ func Start() {
 
 	host := "localhost"
 	if viper.GetBool(consts.DEVELOPMENT) {
-		rlog.Info("Running in development mode")
+		vlog.Info("Running in development mode")
 	} else {
-		rlog.Info("Running in production mode")
+		vlog.Info("Running in production mode")
 		host = ""
 	}
 
@@ -32,6 +32,6 @@ func Start() {
 		ReadTimeout:  20 * time.Millisecond,
 		WriteTimeout: 20 * time.Millisecond,
 	}
-	rlog.Info(fmt.Sprintf("Starting server on port localhost:%s", port))
-	rlog.Fatal("Http server stopped", server.ListenAndServe())
+	vlog.Info(fmt.Sprintf("Starting server on port localhost:%s", port))
+	vlog.Fatal("Http server stopped", server.ListenAndServe())
 }

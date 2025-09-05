@@ -24,6 +24,18 @@ CYAN   := $(shell tput -Txterm setaf 6)
 RED    := $(shell tput -Txterm setaf 1)
 RESET  := $(shell tput -Txterm sgr0)
 
+# External CLI dependencies
+CURL ?= curl
+JQ ?= jq
+
+## VitiStack CRDs (download/install)
+# Override VITISTACK_CRDS_REF to pin a branch, tag, or commit (default: main)
+VITISTACK_CRDS_REF ?= main
+# GitHub API endpoint to list files under crds/ at a specific ref
+VITISTACK_CRDS_API ?= https://api.github.com/repos/vitistack/crds/contents/crds?ref=$(VITISTACK_CRDS_REF)
+# Local directory where CRDs will be downloaded
+CRDS_DOWNLOAD_DIR ?= hack/vitistack-crds
+
 ##@ Help
 .PHONY: help
 help: ## Display this help.
@@ -171,85 +183,48 @@ k8s-token-kubernetes-cleanup: check-kubectl ## Cleanup temporary pod created by 
 	@echo "${GREEN}Temporary pod cleaned up.${RESET}"
 
 ##@ CRDs & Resources
-.PHONY: k8s-install-configmap k8s-uninstall-configmap k8s-install-crds k8s-download-viti-crds k8s-uninstall-crds
+.PHONY: k8s-install-configmap k8s-uninstall-configmap k8s-install-vitistack-crds k8s-download-vitistack-crds k8s-uninstall-crds
 k8s-install-configmap: check-kubectl ## Install configmap into cluster
 	@echo "${GREEN}Installing configmap into cluster...${RESET}"
 	${KUBECTL} apply -f hack/test/manifests/configmap.yaml
 
-k8s-download-viti-crds: ## Download CRDs from private repository (requires GITHUB_TOKEN)
-	@echo "${GREEN}Downloading CRDs from private repository...${RESET}"
-	@if [ -z "$$GITHUB_TOKEN" ]; then \
-		echo "${RED}Error: GITHUB_TOKEN environment variable is required for private repository access${RESET}"; \
-		exit 1; \
-	fi
-	@mkdir -p hack/crds
-	@echo "Downloading vitistack.io_vitistacks.yaml..."
-	@if ! curl --fail -H "Authorization: token $$GITHUB_TOKEN" \
-		-H "Accept: application/vnd.github.v3.raw" \
-		-o hack/crds/vitistack.io_vitistacks.yaml \
-		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_vitistacks.yaml; then \
-		echo "${RED}Error: Failed to download vitistack.io_dvitistacks.yaml${RESET}"; \
-		exit 1; \
-	fi
-	@echo "Downloading vitistack.io_kubernetesproviders.yaml..."
-	@if ! curl --fail -H "Authorization: token $$GITHUB_TOKEN" \
-		-H "Accept: application/vnd.github.v3.raw" \
-		-o hack/crds/vitistack.io_kubernetesproviders.yaml \
-		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_kubernetesproviders.yaml; then \
-		echo "${RED}Error: Failed to download vitistack.io_kubernetesproviders.yaml${RESET}"; \
-		exit 1; \
-	fi
-	@echo "Downloading vitistack.io_machineproviders.yaml..."
-	@if ! curl --fail -H "Authorization: token $$GITHUB_TOKEN" \
-		-H "Accept: application/vnd.github.v3.raw" \
-		-o hack/crds/vitistack.io_machineproviders.yaml \
-		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_machineproviders.yaml; then \
-		echo "${RED}Error: Failed to download vitistack.io_machineproviders.yaml${RESET}"; \
-		exit 1; \
-	fi
-	@echo "Downloading vitistack.io_machines.yaml..."
-	@if ! curl --fail -H "Authorization: token $$GITHUB_TOKEN" \
-		-H "Accept: application/vnd.github.v3.raw" \
-		-o hack/crds/vitistack.io_machines.yaml \
-		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_machines.yaml; then \
-		echo "${RED}Error: Failed to download vitistack.io_machines.yaml${RESET}"; \
-		exit 1; \
-	fi
-	@echo "Downloading vitistack.io_kubernetesclusters.yaml..."
-	@if ! curl --fail -H "Authorization: token $$GITHUB_TOKEN" \
-		-H "Accept: application/vnd.github.v3.raw" \
-		-o hack/crds/vitistack.io_kubernetesclusters.yaml \
-		https://api.github.com/repos/vitistack/crds/contents/crds/vitistack.io_kubernetesclusters.yaml; then \
-		echo "${RED}Error: Failed to download vitistack.io_kubernetesclusters.yaml${RESET}"; \
-		exit 1; \
-	fi
-	@echo "${GREEN}CRDs downloaded successfully${RESET}"
-
-k8s-uninstall-configmap: check-kubectl ## Uninstall configmap into cluster
-	@echo "${GREEN}Installing configmap into cluster...${RESET}"
+k8s-uninstall-configmap: check-kubectl ## Uninstall configmap from cluster
+	@echo "${RED}Uninstalling configmap from cluster...${RESET}"
 	${KUBECTL} delete -f hack/test/manifests/configmap.yaml
 
-k8s-install-viti-crds: ## Install CRDs into a cluster
-	@echo "${GREEN}Installing CRDs...${RESET}"
-	@if [ ! -d "hack/crds" ]; then \
-		echo "${RED}Error: hack/crds directory does not exist${RESET}"; \
-		echo "${YELLOW}Run 'make k8s-viti-crds-download' first to download the CRDs (requires GITHUB_TOKEN)${RESET}"; \
-		exit 1; \
-	fi
-	@if [ -z "$$(find hack/crds -name '*.yaml' -type f 2>/dev/null)" ]; then \
-		echo "${RED}Error: No YAML files found in hack/crds directory${RESET}"; \
-		echo "${YELLOW}Run 'make k8s-viti-crds-download' first to download the CRDs (requires GITHUB_TOKEN)${RESET}"; \
-		exit 1; \
-	fi
-	@echo "Found CRD files:"
-	@ls -1 hack/crds/*.yaml | sed 's/^/  - /'
-	${KUBECTL} apply -f hack/crds/
-	@echo "${GREEN}CRDs installed successfully${RESET}"
+.PHONY: k8s-download-vitistack-crds
+k8s-download-vitistack-crds: require-curl-jq ## Download all VitiStack CRDs from vitistack/crds@$(VITISTACK_CRDS_REF) into $(CRDS_DOWNLOAD_DIR)
+	@echo -e "$(CYAN)Fetching CRD list from$(RESET) $(VITISTACK_CRDS_API)"
+	@mkdir -p $(CRDS_DOWNLOAD_DIR)
+	@$(CURL) -fsSL "$(VITISTACK_CRDS_API)" | $(JQ) -r '.[] | select(.type=="file") | select(.name | test("\\.(ya?ml)$$")) | .download_url' > $(CRDS_DOWNLOAD_DIR)/.crd_urls
+	@if [ ! -s $(CRDS_DOWNLOAD_DIR)/.crd_urls ]; then echo "No CRD files found at ref $(VITISTACK_CRDS_REF)."; exit 1; fi
+	@echo -e "$(CYAN)Downloading CRDs into$(RESET) $(CRDS_DOWNLOAD_DIR)"
+	@while read -r url; do \
+		fname=$$(basename $$url); \
+		echo "- $$fname"; \
+		$(CURL) -fsSL "$$url" -o "$(CRDS_DOWNLOAD_DIR)/$$fname"; \
+	done < $(CRDS_DOWNLOAD_DIR)/.crd_urls
+	@echo -e "$(GREEN)CRDs downloaded to$(RESET) $(CRDS_DOWNLOAD_DIR)"
 
-k8s-uninstall-crds: check-kubectl ## Uninstall CRDs into a cluster
+.PHONY: k8s-install-vitistack-crds
+k8s-install-vitistack-crds: require-kubectl k8s-download-vitistack-crds ## Apply downloaded VitiStack CRDs to the current kube-context
+	@echo -e "$(CYAN)Applying CRDs from$(RESET) $(CRDS_DOWNLOAD_DIR)"
+	@$(KUBECTL) apply -f $(CRDS_DOWNLOAD_DIR)
+	@echo -e "$(GREEN)VitiStack CRDs installed successfully.$(RESET)"
+
+k8s-uninstall-crds: check-kubectl ## Uninstall CRDs from the cluster
 	@echo "${RED}Uninstalling CRDs...${RESET}"
-	${KUBECTL} delete -f hack/crds/
+	${KUBECTL} delete -f $(CRDS_DOWNLOAD_DIR)
 
-k8s-install-test-manifests: check-kubectl ## Install test resources (KubernetesProviders and MachineProviders)
-	@echo "${GREEN}Installing test resources (KubernetesProviders and MachineProviders...)${RESET}"
-	${KUBECTL} apply -f hack/test/manifests/
+
+# Dependency checks used by the CRD targets
+.PHONY: require-kubectl
+require-kubectl: ## Verify kubectl is installed
+	@command -v $(KUBECTL) >/dev/null 2>&1 || { echo "Error: $(KUBECTL) is required (see https://kubernetes.io/docs/tasks/tools/)."; exit 1; }
+
+## Shared dependency check
+.PHONY: require-curl-jq
+require-curl-jq: ## Verify curl and jq are installed
+	@command -v $(CURL) >/dev/null 2>&1 || { echo "Error: $(CURL) is required (e.g., brew install curl)."; exit 1; }
+	@command -v $(JQ) >/dev/null 2>&1 || { echo "Error: $(JQ) is required (e.g., brew install jq)."; exit 1; }
+

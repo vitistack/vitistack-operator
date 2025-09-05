@@ -14,7 +14,8 @@
       "debugAdapter": "dlv-dap",
       "env": {
         "GO_ENV": "development",
-        "DEVELOPMENT": "true"
+        "DEVELOPMENT": "true",
+        "JSON_LOGGING": "true"
       }
     }
   ]

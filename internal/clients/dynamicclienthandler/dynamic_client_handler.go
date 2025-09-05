@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/NorskHelsenett/ror/pkg/rlog"
-
+	"github.com/vitistack/common/pkg/loggers/vlog"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
@@ -21,31 +20,31 @@ type DynamicClientHandler interface {
 }
 
 func Start(discoveryClient *discovery.DiscoveryClient, dynamicClient dynamic.Interface, dynamichandler DynamicClientHandler, stop chan struct{}, sigs chan os.Signal) error {
-	rlog.Info("Starting dynamic watchers")
+	vlog.Info("Starting dynamic watchers")
 
 	schemas := dynamichandler.GetSchemas()
-	rlog.Info("Found schemas to watch", rlog.Int("count", len(schemas)))
+	vlog.Info("Found schemas to watch", "count", len(schemas))
 
 	for _, schema := range schemas {
-		rlog.Info("Checking resource availability",
-			rlog.String("group", schema.Group),
-			rlog.String("version", schema.Version),
-			rlog.String("resource", schema.Resource))
+		vlog.Info("Checking resource availability",
+			"group", schema.Group,
+			"version", schema.Version,
+			"resource", schema.Resource)
 
 		check, err := discovery.IsResourceEnabled(discoveryClient, schema)
 		if err != nil {
-			rlog.Error("Could not query resources from cluster", err)
+			vlog.Error("Could not query resources from cluster", err)
 		}
 		if check {
-			rlog.Info("Resource is available, creating watcher", rlog.String("resource", schema.Resource))
+			vlog.Info("Resource is available, creating watcher", "resource", schema.Resource)
 			controller := newDynamicWatcher(dynamichandler, dynamicClient, schema)
 			go func(res string) {
-				rlog.Info("Starting watcher for resource", rlog.String("resource", res))
+				vlog.Info("Starting watcher for resource", "resource", res)
 				controller.Run(stop)
 			}(schema.Resource)
 		} else {
 			errmsg := fmt.Sprintf("Could not register resource %s", schema.Resource)
-			rlog.Info(errmsg)
+			vlog.Info(errmsg)
 		}
 	}
 	return nil
@@ -63,11 +62,11 @@ func (c *DynamicWatcher) Run(stop <-chan struct{}) {
 
 	// Wait for cache to sync before processing events
 	if !cache.WaitForCacheSync(stop, c.dynInformer.HasSynced) {
-		rlog.Error("Failed to sync cache", nil)
+		vlog.Error("Failed to sync cache", nil)
 		return
 	}
 
-	rlog.Info("Cache synced successfully, starting to process events")
+	vlog.Info("Cache synced successfully, starting to process events")
 
 	// Wait for stop signal
 	<-stop
@@ -89,7 +88,7 @@ func newDynamicWatcher(dynamichandler DynamicClientHandler, client dynamic.Inter
 		DeleteFunc: dynamichandler.DeleteResource,
 	})
 	if err != nil {
-		rlog.Error("Error adding event handler", err)
+		vlog.Error("Error adding event handler", err)
 	}
 
 	return dynWatcher

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/spf13/viper"
+	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/vitistack-operator/internal/cache"
 	"github.com/vitistack/vitistack-operator/internal/clients"
 	"github.com/vitistack/vitistack-operator/pkg/consts"
@@ -21,20 +21,20 @@ func GetName(ctx context.Context) (string, error) {
 	configMapName := viper.GetString(consts.CONFIGMAPNAME)
 	namespace := viper.GetString(consts.NAMESPACE)
 
-	rlog.Info("Getting datacenter name",
-		rlog.String("configMapName", configMapName),
-		rlog.String("namespace", namespace))
+	vlog.Info("Getting datacenter name",
+		"configMapName: ", configMapName,
+		"namespace: ", namespace)
 
 	// Try to get from cache first
 	configData, err := getConfigDataFromCache(ctx, namespace, configMapName)
 	if err == nil {
-		rlog.Info("Retrieved ConfigMap data from cache",
-			rlog.String("name", configData["name"]))
+		vlog.Info("Retrieved ConfigMap data from cache",
+			"name: ", configData["name"])
 		// If cache is valid, return the data
 		return configData["name"], nil
 	}
 
-	rlog.Info("Cache miss or error, falling back to Kubernetes API", rlog.Any("error", err))
+	vlog.Info("Cache miss or error, falling back to Kubernetes API", "error: ", err)
 
 	// If cache fails, get from Kubernetes API and update cache
 	configData, err = getConfigDataFromK8s(ctx, namespace, configMapName)
@@ -42,8 +42,8 @@ func GetName(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to get config data: %w", err)
 	}
 
-	rlog.Info("Retrieved ConfigMap data from Kubernetes API",
-		rlog.String("name", configData["name"]))
+	vlog.Info("Retrieved ConfigMap data from Kubernetes API",
+		"name: ", configData["name"])
 
 	// Update cache with fresh data from Kubernetes API
 	cacheKey := buildCacheKey(namespace, configMapName)
@@ -51,9 +51,9 @@ func GetName(ctx context.Context) (string, error) {
 	if err == nil && configMap != nil {
 		err = cache.Cache.Set(ctx, cacheKey, configMap)
 		if err != nil {
-			rlog.Error("Failed to update cache with fresh ConfigMap data:", err)
+			vlog.Error("Failed to update cache with fresh ConfigMap data:", err)
 		} else {
-			rlog.Info("Updated cache with fresh ConfigMap data")
+			vlog.Info("Updated cache with fresh ConfigMap data")
 		}
 	}
 
@@ -65,10 +65,10 @@ func InvalidateCache(ctx context.Context, namespace, name string) error {
 	cacheKey := buildCacheKey(namespace, name)
 	err := cache.Cache.Delete(ctx, cacheKey)
 	if err != nil {
-		rlog.Error("Failed to invalidate cache:", err)
+		vlog.Error("Failed to invalidate cache:", err)
 		return err
 	}
-	rlog.Info("Cache invalidated successfully", rlog.String("key", cacheKey))
+	vlog.Info("Cache invalidated successfully", "key: ", cacheKey)
 	return nil
 }
 
@@ -127,7 +127,7 @@ func getConfigDataFromCache(ctx context.Context, namespace, name string) (map[st
 	cacheKey := buildCacheKey(namespace, name)
 	cachedDataStr, err := cache.Cache.Get(ctx, cacheKey)
 	if err != nil {
-		rlog.Error("Cache miss:", err)
+		vlog.Error("Cache miss:", err)
 		return nil, err
 	}
 
@@ -138,13 +138,13 @@ func getConfigDataFromCache(ctx context.Context, namespace, name string) (map[st
 
 	configData, err := extractConfigDataFromCache(cachedDataStr)
 	if err != nil {
-		rlog.Error("Failed to process cached data:", err)
+		vlog.Error("Failed to process cached data:", err)
 		return nil, err
 	}
 
 	err = validateConfigData(configData)
 	if err != nil {
-		rlog.Error("Invalid cached data:", err)
+		vlog.Error("Invalid cached data:", err)
 		return nil, err
 	}
 

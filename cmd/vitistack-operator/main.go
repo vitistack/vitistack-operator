@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/NorskHelsenett/ror/pkg/rlog"
+	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/vitistack-operator/internal/cache"
 	"github.com/vitistack/vitistack-operator/internal/clients"
 	"github.com/vitistack/vitistack-operator/internal/clients/dynamicclienthandler"
@@ -22,7 +22,12 @@ import (
 
 // main is the entrypoint for the vitistack-operator binary.
 func main() {
-	_, _ = maxprocs.Set(maxprocs.Logger(rlog.Infof))
+	_ = vlog.Setup(vlog.Options{Level: "info", ColorizeLine: true, AddCaller: true})
+	defer func() {
+		_ = vlog.Sync()
+	}()
+
+	_, _ = maxprocs.Set(maxprocs.Logger(vlog.Logr().Info))
 	cancelChan := make(chan os.Signal, 1)
 
 	stop := make(chan struct{})
@@ -53,9 +58,9 @@ func main() {
 	resourcehandler := dynamichandler.NewDynamicClientHandler()
 	err = dynamicclienthandler.Start(clients.DiscoveryClient, clients.DynamicClient, resourcehandler, stop, cancelChan)
 	if err != nil {
-		rlog.Fatal("could not start dynamic client", err)
+		vlog.Fatal("could not start dynamic client", err)
 	}
 
 	sig := <-cancelChan
-	rlog.Info("Caught signal", rlog.Any("signal", sig))
+	vlog.Info("Caught signal", "signal", sig)
 }

@@ -3,7 +3,7 @@ package eventmanager
 import (
 	"sync"
 
-	"github.com/NorskHelsenett/ror/pkg/rlog"
+	"github.com/vitistack/common/pkg/loggers/vlog"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -50,7 +50,7 @@ func (em *EventManager) Subscribe(resourceKind string, eventHandler EventHandler
 		em.handlers[resourceKind] = make([]EventHandler, 0)
 	}
 	em.handlers[resourceKind] = append(em.handlers[resourceKind], eventHandler)
-	rlog.Info("Subscribed handler for resource kind: " + resourceKind)
+	vlog.Info("Subscribed handler for resource kind: " + resourceKind)
 }
 
 // SubscribeAll registers a handler for all resource events
@@ -59,7 +59,7 @@ func (em *EventManager) SubscribeAll(eventHandler EventHandler) {
 	defer em.mutex.Unlock()
 
 	em.globalHandlers = append(em.globalHandlers, eventHandler)
-	rlog.Info("Subscribed handler for all resource events")
+	vlog.Info("Subscribed handler for all resource events")
 }
 
 // Publish notifies all registered handlers of a resource event
@@ -75,7 +75,7 @@ func (em *EventManager) Publish(event ResourceEvent) {
 			go func(h EventHandler) {
 				defer func() {
 					if r := recover(); r != nil {
-						rlog.Error("Panic in event handler", nil)
+						vlog.Error("Panic in event handler", nil)
 					}
 				}()
 				h(event)
@@ -88,7 +88,7 @@ func (em *EventManager) Publish(event ResourceEvent) {
 		go func(h EventHandler) {
 			defer func() {
 				if r := recover(); r != nil {
-					rlog.Error("Panic in global event handler", nil)
+					vlog.Error("Panic in global event handler", nil)
 				}
 			}()
 			h(event)

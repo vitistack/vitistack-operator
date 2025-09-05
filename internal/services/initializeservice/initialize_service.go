@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/NorskHelsenett/ror/pkg/rlog"
 	"github.com/spf13/viper"
+	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/vitistack-operator/internal/clients"
 	"github.com/vitistack/vitistack-operator/pkg/consts"
 
@@ -14,10 +14,10 @@ import (
 )
 
 func CheckPrerequisites() {
-	rlog.Info("Running prerequisite checks...")
+	vlog.Info("Running prerequisite checks...")
 	CheckConfigmap()
 	CheckCRDs()
-	rlog.Info("✅ Prerequisite checks passed")
+	vlog.Info("✅ Prerequisite checks passed")
 }
 
 // CheckConfigmap verifies that the required ConfigMap exists and has the necessary configuration
@@ -34,7 +34,7 @@ func CheckConfigmap() {
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to find required ConfigMap '%s' in namespace '%s': %s", configMapName, namespace, err.Error()))
 	} else {
-		rlog.Info(fmt.Sprintf("✅ ConfigMap '%s' found in namespace '%s'", configMapName, namespace))
+		vlog.Info(fmt.Sprintf("✅ ConfigMap '%s' found in namespace '%s'", configMapName, namespace))
 
 		// Verify that the ConfigMap contains required keys
 		// Add your specific key checks here based on what your application needs
@@ -43,7 +43,7 @@ func CheckConfigmap() {
 			if _, exists := configMap.Data[key]; !exists {
 				errors = append(errors, fmt.Sprintf("ConfigMap '%s' is missing required key: %s", configMapName, key))
 			} else {
-				rlog.Info(fmt.Sprintf("✅ ConfigMap contains required key: %s", key))
+				vlog.Info(fmt.Sprintf("✅ ConfigMap contains required key: %s", key))
 			}
 		}
 	}
@@ -51,11 +51,11 @@ func CheckConfigmap() {
 	// If we collected any errors, report them all together
 	if len(errors) > 0 {
 		errorMessage := fmt.Sprintf("ConfigMap prerequisite checks failed:\n- %s", strings.Join(errors, "\n- "))
-		rlog.Error(errorMessage, nil)
+		vlog.Error(errorMessage, nil)
 		panic(errorMessage)
 	}
 
-	rlog.Info("✅ ConfigMap prerequisite checks passed")
+	vlog.Info("✅ ConfigMap prerequisite checks passed")
 }
 
 func CheckCRDs() {
@@ -85,7 +85,7 @@ func CheckCRDs() {
 				if !crdExists(resources, crdKind) {
 					errors = append(errors, fmt.Sprintf("%s CRD is not installed", crdKind))
 				} else {
-					rlog.Info(fmt.Sprintf("✅ %s CRD is installed", crdKind))
+					vlog.Info(fmt.Sprintf("✅ %s CRD is installed", crdKind))
 				}
 			}
 		}
@@ -94,11 +94,11 @@ func CheckCRDs() {
 	// If we collected any errors, report them all together
 	if len(errors) > 0 {
 		errorMessage := fmt.Sprintf("Prerequisite checks failed:\n- %s", strings.Join(errors, "\n- "))
-		rlog.Error(errorMessage, nil)
+		vlog.Error(errorMessage, nil)
 		panic(errorMessage)
 	}
 
-	rlog.Info("✅ All prerequisite checks passed")
+	vlog.Info("✅ All prerequisite checks passed")
 }
 
 // crdExists verifies that a specific CRD exists in the API resources

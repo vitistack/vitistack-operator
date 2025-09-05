@@ -7,4 +7,5 @@ var (
 	DEVELOPMENT      = "DEVELOPMENT"
 	REGION           = "REGION"
 	LOCATION         = "LOCATION"
+	JSON_LOGGING     = "JSON_LOGGING"
 )

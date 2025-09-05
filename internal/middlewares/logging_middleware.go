@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/NorskHelsenett/ror/pkg/rlog"
+	"github.com/vitistack/common/pkg/loggers/vlog"
 )
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		rlog.Info(fmt.Sprintf("Started %s %s", r.Method, r.URL.Path))
+		vlog.Info(fmt.Sprintf("Started %s %s", r.Method, r.URL.Path))
 
 		// Call the next handler
 		next.ServeHTTP(w, r)
 
-		rlog.Info(fmt.Sprintf("Completed %s in %v", r.URL.Path, time.Since(start)))
+		vlog.Info(fmt.Sprintf("Completed %s in %v", r.URL.Path, time.Since(start)))
 	})
 }

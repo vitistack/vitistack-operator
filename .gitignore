@@ -45,4 +45,4 @@ coverage.html
 *.cov
 # Test binary
 *.test
-hack/crds/*.yaml
+hack/vitistack-crds/

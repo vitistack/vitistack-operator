@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/NorskHelsenett/ror/pkg/rlog"
+	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/vitistack-operator/internal/cache"
 	"github.com/vitistack/vitistack-operator/internal/clients/dynamicclienthandler"
 	"github.com/vitistack/vitistack-operator/pkg/eventmanager"
@@ -21,7 +21,7 @@ func NewDynamicClientHandler() dynamicclienthandler.DynamicClientHandler {
 
 func (handler) AddResource(obj any) {
 	unstructuredObject := obj.(*unstructured.Unstructured)
-	rlog.Info(fmt.Sprintf("AddResource called - name: %s, kind: %s, namespace: %s",
+	vlog.Info(fmt.Sprintf("AddResource called - name: %s, kind: %s, namespace: %s",
 		unstructuredObject.GetName(),
 		unstructuredObject.GetKind(),
 		unstructuredObject.GetNamespace()))
@@ -33,15 +33,15 @@ func (handler) AddResource(obj any) {
 		namespace := unstructuredObject.GetNamespace()
 		name := unstructuredObject.GetName()
 		cacheKey = fmt.Sprintf("configmap-%s-%s", namespace, name)
-		rlog.Info(fmt.Sprintf("Using ConfigMap name as cache key: %s", cacheKey))
+		vlog.Info(fmt.Sprintf("Using ConfigMap name as cache key: %s", cacheKey))
 	}
 
 	err := cache.Cache.Set(context.TODO(), cacheKey, unstructuredObject.Object)
 	if err != nil {
-		rlog.Error("Error setting cache:", err)
+		vlog.Error("Error setting cache:", err)
 		return
 	}
-	rlog.Info("Cache set successfully")
+	vlog.Info("Cache set successfully")
 
 	// Publish event to notify subscribers
 	eventmanager.EventBus.Publish(eventmanager.ResourceEvent{
@@ -49,14 +49,14 @@ func (handler) AddResource(obj any) {
 		Resource: unstructuredObject,
 	})
 
-	rlog.Info("Published add event for resource",
-		rlog.String("name", unstructuredObject.GetName()),
-		rlog.String("kind", unstructuredObject.GetKind()))
+	vlog.Info("Published add event for resource",
+		"name: ", unstructuredObject.GetName(),
+		"kind: ", unstructuredObject.GetKind())
 }
 
 func (handler) DeleteResource(obj any) {
 	unstructuredObject := obj.(*unstructured.Unstructured)
-	rlog.Info(fmt.Sprintf("Delete Resource, name: %s, kind: %s", unstructuredObject.GetName(), unstructuredObject.GetKind()))
+	vlog.Info(fmt.Sprintf("Delete Resource, name: %s, kind: %s", unstructuredObject.GetName(), unstructuredObject.GetKind()))
 
 	// Determine cache key based on resource kind
 	cacheKey := string(unstructuredObject.GetUID())
@@ -65,15 +65,15 @@ func (handler) DeleteResource(obj any) {
 		namespace := unstructuredObject.GetNamespace()
 		name := unstructuredObject.GetName()
 		cacheKey = fmt.Sprintf("configmap-%s-%s", namespace, name)
-		rlog.Info(fmt.Sprintf("Using ConfigMap name as cache key: %s", cacheKey))
+		vlog.Info(fmt.Sprintf("Using ConfigMap name as cache key: %s", cacheKey))
 	}
 
 	err := cache.Cache.Delete(context.TODO(), cacheKey)
 	if err != nil {
-		rlog.Error("Error deleting cache:", err)
+		vlog.Error("Error deleting cache:", err)
 		return
 	}
-	rlog.Info("Cache deleted successfully")
+	vlog.Info("Cache deleted successfully")
 
 	// Publish event to notify subscribers
 	eventmanager.EventBus.Publish(eventmanager.ResourceEvent{
@@ -84,7 +84,7 @@ func (handler) DeleteResource(obj any) {
 
 func (handler) UpdateResource(_ any, obj any) {
 	unstructuredObject := obj.(*unstructured.Unstructured)
-	rlog.Info(fmt.Sprintf("UpdateResource called - name: %s, kind: %s, namespace: %s",
+	vlog.Info(fmt.Sprintf("UpdateResource called - name: %s, kind: %s, namespace: %s",
 		unstructuredObject.GetName(),
 		unstructuredObject.GetKind(),
 		unstructuredObject.GetNamespace()))
@@ -96,22 +96,22 @@ func (handler) UpdateResource(_ any, obj any) {
 		namespace := unstructuredObject.GetNamespace()
 		name := unstructuredObject.GetName()
 		cacheKey = fmt.Sprintf("configmap-%s-%s", namespace, name)
-		rlog.Info(fmt.Sprintf("Using ConfigMap name as cache key: %s", cacheKey))
+		vlog.Info(fmt.Sprintf("Using ConfigMap name as cache key: %s", cacheKey))
 	}
 
 	err := cache.Cache.Set(context.TODO(), cacheKey, unstructuredObject.Object)
 	if err != nil {
-		rlog.Error("Error updating cache:", err)
+		vlog.Error("Error updating cache:", err)
 		return
 	}
-	rlog.Info("Cache updated successfully")
+	vlog.Info("Cache updated successfully")
 
 	// Additional logging for ConfigMap updates
 	if unstructuredObject.GetKind() == "ConfigMap" {
-		rlog.Info("ConfigMap updated in cache",
-			rlog.String("name", unstructuredObject.GetName()),
-			rlog.String("namespace", unstructuredObject.GetNamespace()),
-			rlog.String("cacheKey", cacheKey))
+		vlog.Info("ConfigMap updated in cache",
+			"name: ", unstructuredObject.GetName(),
+			"namespace: ", unstructuredObject.GetNamespace(),
+			"cacheKey: ", cacheKey)
 	}
 
 	// Publish event to notify subscribers
@@ -120,7 +120,7 @@ func (handler) UpdateResource(_ any, obj any) {
 		Resource: unstructuredObject,
 	})
 
-	rlog.Info("Published update event for resource",
-		rlog.String("name", unstructuredObject.GetName()),
-		rlog.String("kind", unstructuredObject.GetKind()))
+	vlog.Info("Published update event for resource",
+		"name: ", unstructuredObject.GetName(),
+		"kind: ", unstructuredObject.GetKind())
 }
