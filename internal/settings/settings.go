@@ -19,6 +19,7 @@ func Init() {
 	viper.SetDefault(consts.REGION, "Norway")
 	viper.SetDefault(consts.LOCATION, "Trøndelag")
 	viper.SetDefault(consts.JSON_LOGGING, true)
+	viper.SetDefault(consts.LOG_LEVEL, "info")
 
 	viper.AutomaticEnv()
 }

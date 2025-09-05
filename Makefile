@@ -16,13 +16,21 @@ POD ?= $(shell kubectl -n $(NAMESPACE) get pods -o jsonpath='{.items[0].metadata
 # Get the currently used golang version
 GO_VERSION=$(shell go version | sed -e 's/^[^0-9.]*\([0-9.]*\).*/\1/')
 
-# COLORS
-GREEN  := $(shell tput -Txterm setaf 2)
-YELLOW := $(shell tput -Txterm setaf 3)
-WHITE  := $(shell tput -Txterm setaf 7)
-CYAN   := $(shell tput -Txterm setaf 6)
-RED    := $(shell tput -Txterm setaf 1)
-RESET  := $(shell tput -Txterm sgr0)
+# Basic colors
+BLACK=\033[0;30m
+RED=\033[0;31m
+GREEN=\033[0;32m
+YELLOW=\033[0;33m
+BLUE=\033[0;34m
+PURPLE=\033[0;35m
+CYAN=\033[0;36m
+WHITE=\033[0;37m
+
+# Text formatting
+BOLD=\033[1m
+UNDERLINE=\033[4m
+RESET=\033[0m
+
 
 # External CLI dependencies
 CURL ?= curl

@@ -8,4 +8,5 @@ var (
 	REGION           = "REGION"
 	LOCATION         = "LOCATION"
 	JSON_LOGGING     = "JSON_LOGGING"
+	LOG_LEVEL        = "LOG_LEVEL"
 )
