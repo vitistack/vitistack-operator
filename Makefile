@@ -13,8 +13,26 @@ MAIN_PATH=./cmd/vitistack-operator/main.go
 NAMESPACE=default
 POD ?= $(shell kubectl -n $(NAMESPACE) get pods -o jsonpath='{.items[0].metadata.name}')
 
+## Location to install dependencies to
+LOCALBIN ?= $(shell pwd)/bin
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
+
 # Get the currently used golang version
 GO_VERSION=$(shell go version | sed -e 's/^[^0-9.]*\([0-9.]*\).*/\1/')
+GOSEC ?= $(LOCALBIN)/gosec
+GOSEC_VERSION ?= v2.22.8
+
+GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
+GOLANGCI_LINT_VERSION ?= v2.3.0
+
+# Helper macro: installs a Go tool only if the target binary doesn't already exist.
+define go-install-tool
+@[ -f $(1) ] || { \
+	echo "Installing $(2)@$(3) to $(LOCALBIN)"; \
+	GOBIN=$(LOCALBIN) go install $(2)@$(3); \
+}
+endef
 
 # Basic colors
 BLACK=\033[0;30m
@@ -77,16 +95,28 @@ all: check-prereqs clean test build ## Run all checks, clean, test and build
 
 build: check-go ## Build the application binary
 	@echo "${GREEN}Building ${BINARY_NAME}...${RESET}"
+	${GO} vet ./...
+	${GO} fmt ./...
 	${GO} build -o dist/${BINARY_NAME} ${MAIN_PATH}
 
 build-static: check-go ## Build the application with static linking
 	@echo "${GREEN}Building ${BINARY_NAME} with static linking...${RESET}"
+	${GO} vet ./...
+	${GO} fmt ./...
 	CGO_ENABLED=0 ${GO} build -ldflags '-extldflags "-static"' -o dist/${BINARY_NAME} ${MAIN_PATH}
 
 clean: ## Clean build files and artifacts
 	@echo "${YELLOW}Cleaning...${RESET}"
 	${GO} clean
 	rm -f ${BINARY_NAME}
+
+.PHONY: lint
+lint: golangci-lint ## Run golangci-lint linter
+	$(GOLANGCI_LINT) run
+
+.PHONY: lint-fix
+lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
+	$(GOLANGCI_LINT) run --fix
 
 ##@ Testing & Quality
 test: check-go ## Run all tests
@@ -106,9 +136,6 @@ vet: check-go ## Run go vet
 	@echo "${YELLOW}Running go vet...${RESET}"
 	${GO} vet ./...
 
-lint: check-go ## Run golangci-lint
-	@echo "${YELLOW}Running linter...${RESET}"
-	golangci-lint run ./...
 
 gosec: check-go ## Run gosec security scanner
 	@echo "${YELLOW}Running gosec...${RESET}"
@@ -134,16 +161,30 @@ docker-push: check-docker ## Push Docker image
 
 
 ##@ Installation
+.PHONY: golangci-lint
+golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
+$(GOLANGCI_LINT): $(LOCALBIN)
+	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/v2/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
+
 .PHONY: install-lint install-gosec helm-install
 install-lint: ## Install golangci-lint
 	@echo "${YELLOW}Installing golangci-lint...${RESET}"
 	${GO} install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	@echo "${YELLOW}Then run 'make lint' to check for issues.${RESET}"
 
-install-gosec: ## Install gosec security scanner
-	@echo "${YELLOW}Installing gosec...${RESET}"
-	${GO} install github.com/securego/gosec/v2/cmd/gosec@latest
-	@echo "${YELLOW}Then run 'make gosec' to check for security issues.${RESET}"
+.PHONY: install-security-scanner
+install-security-scanner: $(GOSEC) ## Install gosec security scanner locally (static analysis for security issues)
+$(GOSEC): $(LOCALBIN)
+	@set -e; echo "Attempting to install gosec $(GOSEC_VERSION)"; \
+	if ! GOBIN=$(LOCALBIN) go install github.com/securego/gosec/v2/cmd/gosec@$(GOSEC_VERSION) 2>/dev/null; then \
+		echo "Primary install failed, attempting install from @main (compatibility fallback)"; \
+		if ! GOBIN=$(LOCALBIN) go install github.com/securego/gosec/v2/cmd/gosec@main; then \
+			echo "gosec installation failed for versions $(GOSEC_VERSION) and @main"; \
+			exit 1; \
+		fi; \
+	fi; \
+	echo "gosec installed at $(GOSEC)"; \
+	chmod +x $(GOSEC)
 
 helm-install: check-kubectl ## Install Helm chart with CRDs
 	@echo "${GREEN}Installing Helm chart with CRDs...${RESET}"
@@ -163,6 +204,16 @@ update-deps: ## Update dependencies
 	@go get -u ./...
 	@go mod tidy
 	@echo "Dependencies updated!"
+
+##@ Security
+.PHONY: go-security-scan
+go-security-scan: install-security-scanner ## Run gosec security scan (fails on findings)
+	$(GOSEC) ./...
+
+.PHONY: go-security-scan-docker
+go-security-scan-docker: ## Run gosec scan using official container (alternative if local install fails)
+	@echo "Running gosec via Docker container..."; \
+	$(CONTAINER_TOOL) run --rm -v $(PWD):/workspace -w /workspace securego/gosec/gosec:latest ./...
 
 ##@ Kubernetes
 .PHONY: k8s-token-kubernetes k8s-token-kubernetes-cleanup
