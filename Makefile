@@ -24,7 +24,7 @@ GOSEC ?= $(LOCALBIN)/gosec
 GOSEC_VERSION ?= v2.22.8
 
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
-GOLANGCI_LINT_VERSION ?= v2.3.0
+GOLANGCI_LINT_VERSION ?= v2.4.0
 
 # Helper macro: installs a Go tool only if the target binary doesn't already exist.
 define go-install-tool
