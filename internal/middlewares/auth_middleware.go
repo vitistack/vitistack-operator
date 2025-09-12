@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/vitistack/vitistack-operator/internal/clients"
+	"github.com/vitistack/common/pkg/clients/k8sclient"
 	authenticationv1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -40,7 +40,7 @@ func extractToken(r *http.Request) string {
 
 // validateKubernetesToken validates the token using the Kubernetes API.
 func validateKubernetesToken(token string) bool {
-	clientset := clients.Kubernetes
+	clientset := k8sclient.Kubernetes
 
 	// Create a TokenReview request
 	tokenReview := &authenticationv1.TokenReview{

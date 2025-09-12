@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	"github.com/vitistack/common/pkg/clients/k8sclient"
 	"github.com/vitistack/common/pkg/loggers/vlog"
-	"github.com/vitistack/vitistack-operator/internal/clients"
+	"github.com/vitistack/common/pkg/operator/crdcheck"
 	"github.com/vitistack/vitistack-operator/pkg/consts"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +24,7 @@ func CheckPrerequisites() {
 // CheckConfigmap verifies that the required ConfigMap exists and has the necessary configuration
 func CheckConfigmap() {
 	var errors []string
-	kubernetesclient := clients.Kubernetes
+	kubernetesclient := k8sclient.Kubernetes
 
 	// Define the namespace and name of the ConfigMap we expect to exist
 	namespace := viper.GetString(consts.NAMESPACE)         // This might need to be adjusted based on your deployment
@@ -59,54 +60,18 @@ func CheckConfigmap() {
 }
 
 func CheckCRDs() {
-	var errors []string
-	kubernetesclient := clients.Kubernetes
+	vlog.Info("Checking required CRDs...")
 
-	// Check if the cluster is accessible by listing namespaces
-	namespaces, err := kubernetesclient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		errors = append(errors, fmt.Sprintf("Failed to access cluster: %s", err.Error()))
-	} else if len(namespaces.Items) == 0 {
-		errors = append(errors, "No namespaces found in the cluster")
-	}
+	crdcheck.MustEnsureInstalled(context.TODO(),
+		// your CRD plural
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "machines"},
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "kubernetesclusters"},
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "kubernetesproviders"},
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "machineproviders"},
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "networknamespaces"},
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "networkconfigurations"},
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "vitistack"},
+	)
 
-	// Only continue with CRD checks if we can access the cluster
-	if len(errors) == 0 {
-		// Check if all required CRDs are installed
-		resources, err := kubernetesclient.Discovery().ServerResourcesForGroupVersion("vitistack.io/v1alpha1")
-		if err != nil {
-			errors = append(errors, fmt.Sprintf("Vitistack CRDs are not installed properly: %s", err.Error()))
-		} else if len(resources.APIResources) == 0 {
-			errors = append(errors, "No resources found for the required CRDs")
-		} else {
-			// Check for each required CRD
-			requiredCRDs := []string{"KubernetesProvider", "MachineProvider", "Vitistack"}
-			for _, crdKind := range requiredCRDs {
-				if !crdExists(resources, crdKind) {
-					errors = append(errors, fmt.Sprintf("%s CRD is not installed", crdKind))
-				} else {
-					vlog.Info(fmt.Sprintf("✅ %s CRD is installed", crdKind))
-				}
-			}
-		}
-	}
-
-	// If we collected any errors, report them all together
-	if len(errors) > 0 {
-		errorMessage := fmt.Sprintf("Prerequisite checks failed:\n- %s", strings.Join(errors, "\n- "))
-		vlog.Error(errorMessage, nil)
-		panic(errorMessage)
-	}
-
-	vlog.Info("✅ All prerequisite checks passed")
-}
-
-// crdExists verifies that a specific CRD exists in the API resources
-func crdExists(resources *metav1.APIResourceList, crdKind string) bool {
-	for _, resource := range resources.APIResources {
-		if resource.Kind == crdKind {
-			return true
-		}
-	}
-	return false
+	vlog.Info("✅ All crds checks passed")
 }

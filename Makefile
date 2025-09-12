@@ -49,7 +49,6 @@ BOLD=\033[1m
 UNDERLINE=\033[4m
 RESET=\033[0m
 
-
 # External CLI dependencies
 CURL ?= curl
 JQ ?= jq
@@ -254,6 +253,8 @@ k8s-uninstall-configmap: check-kubectl ## Uninstall configmap from cluster
 .PHONY: k8s-download-vitistack-crds
 k8s-download-vitistack-crds: require-curl-jq ## Download all VitiStack CRDs from vitistack/crds@$(VITISTACK_CRDS_REF) into $(CRDS_DOWNLOAD_DIR)
 	@echo -e "$(CYAN)Fetching CRD list from$(RESET) $(VITISTACK_CRDS_API)"
+	@echo -e "$(YELLOW)Clearing existing contents of$(RESET) $(CRDS_DOWNLOAD_DIR)"
+	@rm -rf "$(CRDS_DOWNLOAD_DIR)"
 	@mkdir -p $(CRDS_DOWNLOAD_DIR)
 	@$(CURL) -fsSL "$(VITISTACK_CRDS_API)" | $(JQ) -r '.[] | select(.type=="file") | select(.name | test("\\.(ya?ml)$$")) | .download_url' > $(CRDS_DOWNLOAD_DIR)/.crd_urls
 	@if [ ! -s $(CRDS_DOWNLOAD_DIR)/.crd_urls ]; then echo "No CRD files found at ref $(VITISTACK_CRDS_REF)."; exit 1; fi

@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/vitistack/common/pkg/clients/k8sclient"
 	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/vitistack-operator/internal/cache"
-	"github.com/vitistack/vitistack-operator/internal/clients"
 	"github.com/vitistack/vitistack-operator/internal/clients/dynamicclienthandler"
 	"github.com/vitistack/vitistack-operator/internal/httpserver"
 	"github.com/vitistack/vitistack-operator/internal/listeners/resourceloglistener"
@@ -36,7 +36,7 @@ func main() {
 	var err error
 
 	settings.Init()
-	clients.Init()
+	k8sclient.Init()
 	initializeservice.CheckPrerequisites()
 	cache.Cache, err = cache.VitistackCache{}.NewVitistackCache()
 	if err != nil {
@@ -56,7 +56,7 @@ func main() {
 	}()
 
 	resourcehandler := dynamichandler.NewDynamicClientHandler()
-	err = dynamicclienthandler.Start(clients.DiscoveryClient, clients.DynamicClient, resourcehandler, stop, cancelChan)
+	err = dynamicclienthandler.Start(k8sclient.DiscoveryClient, k8sclient.DynamicClient, resourcehandler, stop, cancelChan)
 	if err != nil {
 		vlog.Fatal("could not start dynamic client", err)
 	}

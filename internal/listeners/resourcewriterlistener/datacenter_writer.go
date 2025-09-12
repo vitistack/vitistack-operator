@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/spf13/viper"
+	"github.com/vitistack/common/pkg/clients/k8sclient"
 	"github.com/vitistack/common/pkg/loggers/vlog"
-	"github.com/vitistack/vitistack-operator/internal/clients"
 	"github.com/vitistack/vitistack-operator/internal/services/vitistacknameservice"
 	"github.com/vitistack/vitistack-operator/pkg/consts"
 	"github.com/vitistack/vitistack-operator/pkg/eventmanager"
@@ -118,7 +118,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 
 	// Get or create the vitistack object
 	vitistackRWMutex.RLock()
-	vitistackObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackCrdName, metav1.GetOptions{})
+	vitistackObj, err := k8sclient.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackCrdName, metav1.GetOptions{})
 	vitistackRWMutex.RUnlock()
 	if err != nil {
 		// If the vitistack doesn't exist, we need to create it
@@ -131,7 +131,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 		}
 		// Get the newly created vitistack object
 		vitistackRWMutex.RLock()
-		vitistackObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackCrdName, metav1.GetOptions{})
+		vitistackObj, err = k8sclient.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackCrdName, metav1.GetOptions{})
 		vitistackRWMutex.RUnlock()
 		if err != nil {
 			vlog.Error("Failed to get newly created Viti stack CRD", err)
@@ -202,7 +202,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 	}
 
 	// Update the vitistack object
-	_, err = clients.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), vitistackObj, metav1.UpdateOptions{})
+	_, err = k8sclient.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), vitistackObj, metav1.UpdateOptions{})
 	if err != nil {
 		vlog.Error("Failed to update Viti stack CRD", err,
 			"name", event.Resource.GetName(),
@@ -223,7 +223,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 // based on the providerType (either "kubernetesProviders" or "machineProviders")
 func updateVitistackWithProvider(event eventmanager.ResourceEvent, providerType string) {
 	// Use the shared dynamic client
-	if clients.DynamicClient == nil {
+	if k8sclient.DynamicClient == nil {
 		vlog.Error("Dynamic client is not initialized", nil)
 		return
 	}
@@ -261,7 +261,7 @@ func updateVitistackWithProvider(event eventmanager.ResourceEvent, providerType 
 func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstructured.Unstructured, error) {
 	// Use a read lock first since we're just checking if the vitistack exists
 	vitistackRWMutex.RLock()
-	vitistackObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), name, metav1.GetOptions{})
+	vitistackObj, err := k8sclient.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), name, metav1.GetOptions{})
 	vitistackRWMutex.RUnlock()
 
 	if err == nil {
@@ -276,7 +276,7 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 	defer vitistackRWMutex.Unlock()
 
 	// Check again in case another goroutine created the vitistack while we were waiting for the lock
-	vitistackObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), name, metav1.GetOptions{})
+	vitistackObj, err = k8sclient.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), name, metav1.GetOptions{})
 	if err == nil {
 		return vitistackObj, nil
 	}
@@ -333,7 +333,7 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 		},
 	}
 
-	createdObj, err := clients.DynamicClient.Resource(vitistackGVR).Create(context.TODO(), vitistack, metav1.CreateOptions{})
+	createdObj, err := k8sclient.DynamicClient.Resource(vitistackGVR).Create(context.TODO(), vitistack, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -358,8 +358,8 @@ func getVitistackInfoFromConfigMap() (name, region, location, zone string) {
 	namespace := viper.GetString(consts.NAMESPACE)
 	configMapName := viper.GetString(consts.CONFIGMAPNAME)
 
-	if clients.Kubernetes != nil {
-		configMap, err := clients.Kubernetes.CoreV1().ConfigMaps(namespace).Get(ctx, configMapName, metav1.GetOptions{})
+	if k8sclient.Kubernetes != nil {
+		configMap, err := k8sclient.Kubernetes.CoreV1().ConfigMaps(namespace).Get(ctx, configMapName, metav1.GetOptions{})
 		if err == nil && configMap.Data != nil {
 			if vitistackName == "" {
 				vitistackName = configMap.Data["name"]
@@ -382,7 +382,7 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 	// First, use a read lock to check if the provider already exists
 	vitistackRWMutex.RLock()
 	// Get the latest version of the vitistack object
-	latestObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
+	latestObj, err := k8sclient.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
 		vitistackRWMutex.RUnlock()
 		vlog.Error("Failed to get Vitistack CRD", err,
@@ -423,7 +423,7 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 
 	// Get the latest version again after acquiring the write lock
 	// This ensures we're working with current data even if it changed while we were waiting for the lock
-	latestObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
+	latestObj, err = k8sclient.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
 		vlog.Error("Failed to get updated Vitistack CRD", err,
 			"name: ", vitistackName)
@@ -456,7 +456,7 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 		}
 
 		// Update the vitistack resource
-		_, err = clients.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
+		_, err = k8sclient.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
 		if err != nil {
 			vlog.Error("Failed to update Viti stack CRD", err,
 				"name: ", vitistackName)
@@ -482,7 +482,7 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 	// First, use a read lock to check if the provider exists
 	vitistackRWMutex.RLock()
 	// Get the latest version of the vitistack object
-	latestObj, err := clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
+	latestObj, err := k8sclient.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
 		vitistackRWMutex.RUnlock()
 		vlog.Error("Failed to get Viti stack CRD", err,
@@ -535,7 +535,7 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 	defer vitistackRWMutex.Unlock()
 
 	// Get the latest version again after acquiring the write lock
-	latestObj, err = clients.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
+	latestObj, err = k8sclient.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
 	if err != nil {
 		vlog.Error("Failed to get updated Viti stack CRD", err,
 			"name: ", vitistackName)
@@ -579,7 +579,7 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 		}
 
 		// Update the vitistack resource
-		_, err = clients.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
+		_, err = k8sclient.DynamicClient.Resource(vitistackGVR).Update(context.TODO(), latestObj, metav1.UpdateOptions{})
 		if err != nil {
 			vlog.Error("Failed to update Viti stack CRD after removal", err,
 				"name: ", vitistackName)

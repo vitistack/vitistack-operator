@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/spf13/viper"
+	"github.com/vitistack/common/pkg/clients/k8sclient"
 	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/vitistack-operator/internal/cache"
-	"github.com/vitistack/vitistack-operator/internal/clients"
 	"github.com/vitistack/vitistack-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -119,7 +119,7 @@ func validateConfigData(data map[string]string) error {
 
 // getConfigMapFromK8s fetches a ConfigMap from Kubernetes
 func getConfigMapFromK8s(ctx context.Context, namespace, name string) (*corev1.ConfigMap, error) {
-	return clients.Kubernetes.CoreV1().ConfigMaps(namespace).Get(ctx, name, metav1.GetOptions{})
+	return k8sclient.Kubernetes.CoreV1().ConfigMaps(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
 // getConfigDataFromCache attempts to retrieve config data from the cache
