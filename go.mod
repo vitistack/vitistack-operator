@@ -3,7 +3,7 @@ module github.com/vitistack/vitistack-operator
 go 1.25.1
 
 require (
-	github.com/NorskHelsenett/ror v1.4.20
+	github.com/NorskHelsenett/ror v1.4.21
 	github.com/vitistack/crds v0.1.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
