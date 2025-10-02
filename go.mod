@@ -3,12 +3,12 @@ module github.com/vitistack/vitistack-operator
 go 1.25.1
 
 require (
-	github.com/NorskHelsenett/ror v1.4.22
+	github.com/NorskHelsenett/ror v1.4.23
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.21.0
-	github.com/vitistack/common v0.0.10
-	github.com/vitistack/crds v0.1.5
+	github.com/vitistack/common v0.0.12
+	github.com/vitistack/crds v0.1.6
 	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
@@ -93,7 +93,7 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.13.0 // indirect
 	golang.org/x/tools v0.37.0 // indirect
-	google.golang.org/protobuf v1.36.9 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
