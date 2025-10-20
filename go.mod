@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.21.0
 	github.com/vitistack/common v0.0.15
-	github.com/vitistack/crds v0.2.6
+	github.com/vitistack/crds v0.2.8
 	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
