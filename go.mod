@@ -3,12 +3,12 @@ module github.com/vitistack/vitistack-operator
 go 1.25.2
 
 require (
-	github.com/NorskHelsenett/ror v1.5.3
+	github.com/NorskHelsenett/ror v1.5.11
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.21.0
 	github.com/vitistack/common v0.0.15
-	github.com/vitistack/crds v0.2.6
+	github.com/vitistack/crds v0.2.9
 	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
