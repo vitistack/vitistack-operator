@@ -7,7 +7,7 @@ import (
 	"github.com/vitistack/vitistack-operator/internal/cache"
 	"github.com/vitistack/vitistack-operator/internal/repositoryinterfaces"
 
-	"github.com/vitistack/crds/pkg/v1alpha1"
+	"github.com/vitistack/common/pkg/v1alpha1"
 )
 
 // KubernetesProviderRepository interface defines operations for Kubernetes providers

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/vitistack/crds/pkg/v1alpha1"
+	"github.com/vitistack/common/pkg/v1alpha1"
 	"github.com/vitistack/vitistack-operator/internal/cache"
 	"github.com/vitistack/vitistack-operator/internal/handlers/kubernetesprovidershandler"
 	"github.com/vitistack/vitistack-operator/internal/repositories"
