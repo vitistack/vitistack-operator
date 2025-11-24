@@ -21,10 +21,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Configure Git for private repos
-        run: |
-          git config --global url.https://$GH_TOKEN@github.com/.insteadOf https://github.com/
-
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
@@ -88,5 +84,3 @@ jobs:
         uses: golang/govulncheck-action@v1
         with:
           go-version-file: go.mod
-        env:
-          GOPRIVATE: github.com/vitistack/*
