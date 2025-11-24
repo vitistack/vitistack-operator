@@ -8,9 +8,6 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/vitistack
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -25,14 +22,8 @@ jobs:
       - name: Install dependencies
         run: |
           go mod download
-        env:
-          GOPRIVATE: github.com/vitistack/*
-          GOPROXY: https://proxy.golang.org,direct
-          GOSUMDB: sum.golang.org
 
       - name: Run security scan
         uses: golang/govulncheck-action@v1
         with:
           go-version-file: go.mod
-        env:
-          GOPRIVATE: github.com/vitistack/*
