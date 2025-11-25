@@ -100,16 +100,19 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 	vitistackName := configMapData["name"]
 	region := configMapData["region"]
 	zone := configMapData["zone"]
-	location := configMapData["location"]
+	country := configMapData["country"]
 	provider := configMapData["provider"]
 	description := configMapData["description"]
+	infrastructure := configMapData["infrastructure"]
 
 	vlog.Info("Processing ConfigMap update for Vitistack",
 		"vitistackName: ", vitistackName,
 		"region: ", region,
 		"zone: ", zone,
-		"location: ", location,
-		"provider: ", provider)
+		"country: ", country,
+		"provider: ", provider,
+		"infrastructure: ", infrastructure,
+		"namespace: ", event.Resource.GetNamespace())
 
 	if vitistackName == "" {
 		vlog.Error("Vitistack name is empty in ConfigMap", nil)
@@ -173,13 +176,13 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 	}
 
 	// Update location (as a nested object with country field)
-	if location != "" {
+	if country != "" {
 		locationObj := map[string]any{
-			"country": location,
+			"country": country,
 		}
 		err = unstructured.SetNestedField(vitistackObj.Object, locationObj, "spec", "location")
 		if err != nil {
-			vlog.Error("Failed to set Viti stack location", err)
+			vlog.Error("Failed to set Viti stack country", err)
 			return
 		}
 		updateNeeded = true
@@ -190,6 +193,15 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 		err = unstructured.SetNestedField(vitistackObj.Object, description, "spec", "description")
 		if err != nil {
 			vlog.Error("Failed to set Viti stack description", err)
+			return
+		}
+		updateNeeded = true
+	}
+
+	if infrastructure != "" {
+		err = unstructured.SetNestedField(vitistackObj.Object, infrastructure, "spec", "infrastructure")
+		if err != nil {
+			vlog.Error("Failed to set Viti stack infrastructure", err)
 			return
 		}
 		updateNeeded = true
@@ -214,7 +226,7 @@ func updateVitistack(event eventmanager.ResourceEvent) {
 		"vitistackName: ", vitistackName,
 		"region: ", region,
 		"zone: ", zone,
-		"location: ", location,
+		"country: ", country,
 		"provider: ", provider,
 		"namespace: ", event.Resource.GetNamespace())
 }
@@ -269,7 +281,7 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 	}
 
 	// Get vitistack information from ConfigMap
-	vitistackName, region, location, zone := getVitistackInfoFromConfigMap()
+	vitistackName, region, country, zone := getVitistackInfoFromConfigMap()
 
 	// If the vitistack doesn't exist, we need to create it - acquire a write lock
 	vitistackRWMutex.Lock()
@@ -295,9 +307,9 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 
 	// Build location object if location is provided
 	var locationObj map[string]any
-	if location != "" {
+	if country != "" {
 		locationObj = map[string]any{
-			"country": location,
+			"country": country,
 		}
 	}
 
@@ -345,7 +357,7 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 }
 
 // getVitistackInfoFromConfigMap retrieves vitistack information from the ConfigMap
-func getVitistackInfoFromConfigMap() (name, region, location, zone string) {
+func getVitistackInfoFromConfigMap() (name, region, country, zone string) {
 	// First try to get from cache/service
 	ctx := context.TODO()
 	vitistackName, err := vitistacknameservice.GetName(ctx)
@@ -365,14 +377,14 @@ func getVitistackInfoFromConfigMap() (name, region, location, zone string) {
 				vitistackName = configMap.Data["name"]
 			}
 			region = configMap.Data["region"]
-			location = configMap.Data["location"]
+			country = configMap.Data["country"]
 			zone = configMap.Data["zone"]
 		} else {
 			vlog.Error("Failed to get ConfigMap for vitistack info", err)
 		}
 	}
 
-	return vitistackName, region, location, zone
+	return vitistackName, region, country, zone
 }
 
 // addProviderToVitistack adds a provider to the specified provider list if it doesn't already exist

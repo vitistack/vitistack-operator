@@ -8,5 +8,6 @@ data:
   provider: "test-provider"
   description: "Testing viti stack"
   region: "test-region"
-  location: "test-country"
+  country: "test-country"
   zone: "test-zone"
+  infrastructure: "test"

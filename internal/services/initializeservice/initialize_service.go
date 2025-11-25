@@ -39,7 +39,7 @@ func CheckConfigmap() {
 
 		// Verify that the ConfigMap contains required keys
 		// Add your specific key checks here based on what your application needs
-		requiredKeys := []string{"name", "provider", "region", "location"} // Example required keys
+		requiredKeys := []string{"name", "zone", "region", "country", "infrastructure"} // Example required keys
 		for _, key := range requiredKeys {
 			if _, exists := configMap.Data[key]; !exists {
 				errors = append(errors, fmt.Sprintf("ConfigMap '%s' is missing required key: %s", configMapName, key))
@@ -71,6 +71,9 @@ func CheckCRDs() {
 		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "networknamespaces"},
 		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "networkconfigurations"},
 		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "vitistacks"},
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "controlplanevirtualsharedips"},
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "kubevirtconfigs"},
+		crdcheck.Ref{Group: "vitistack.io", Version: "v1alpha1", Resource: "proxmoxconfigs"},
 	)
 
 	vlog.Info("✅ All crds checks passed")
