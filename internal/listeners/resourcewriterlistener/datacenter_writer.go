@@ -281,7 +281,7 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 	}
 
 	// Get vitistack information from ConfigMap
-	vitistackName, region, country, zone := getVitistackInfoFromConfigMap()
+	vitistackName, region, country, zone, infrastructure := getVitistackInfoFromConfigMap()
 
 	// If the vitistack doesn't exist, we need to create it - acquire a write lock
 	vitistackRWMutex.Lock()
@@ -293,16 +293,21 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 		return vitistackObj, nil
 	}
 
-	// Initialize with empty lists
-	kubernetesProviders := []string{}
-	machineProviders := []string{}
+	// Initialize with empty lists (as arrays of objects)
+	kubernetesProviders := []any{}
+	machineProviders := []any{}
 
-	// Add the current provider to the appropriate list
-	switch providerType {
-	case KubernetesProviderType:
-		kubernetesProviders = append(kubernetesProviders, providerName)
-	case MachineProviderType:
-		machineProviders = append(machineProviders, providerName)
+	// Add the current provider to the appropriate list as an object
+	if providerName != "" {
+		providerObj := map[string]any{
+			"name": providerName,
+		}
+		switch providerType {
+		case KubernetesProviderType:
+			kubernetesProviders = append(kubernetesProviders, providerObj)
+		case MachineProviderType:
+			machineProviders = append(machineProviders, providerObj)
+		}
 	}
 
 	// Build location object if location is provided
@@ -317,6 +322,7 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 		"kubernetesProviders": kubernetesProviders,
 		"machineProviders":    machineProviders,
 		"displayName":         vitistackName,
+		"infrastructure":      infrastructure,
 	}
 
 	// Add region if provided
@@ -357,12 +363,12 @@ func getOrCreateVitistackCrd(name, providerName, providerType string) (*unstruct
 }
 
 // getVitistackInfoFromConfigMap retrieves vitistack information from the ConfigMap
-func getVitistackInfoFromConfigMap() (name, region, country, zone string) {
+func getVitistackInfoFromConfigMap() (name, region, country, zone, infrastructure string) {
 	// First try to get from cache/service
 	ctx := context.TODO()
 	vitistackName, err := vitistacknameservice.GetName(ctx)
 	if err != nil {
-		vlog.Error("Failed to get vitistack name from service", err)
+		vlog.Error("Failed to get vitistack name from service: ", err)
 		vitistackName = ""
 	}
 
@@ -379,12 +385,13 @@ func getVitistackInfoFromConfigMap() (name, region, country, zone string) {
 			region = configMap.Data["region"]
 			country = configMap.Data["country"]
 			zone = configMap.Data["zone"]
+			infrastructure = configMap.Data["infrastructure"]
 		} else {
 			vlog.Error("Failed to get ConfigMap for vitistack info", err)
 		}
 	}
 
-	return vitistackName, region, country, zone
+	return vitistackName, region, country, zone, infrastructure
 }
 
 // addProviderToVitistack adds a provider to the specified provider list if it doesn't already exist
@@ -402,8 +409,8 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 		return
 	}
 
-	// Check if provider already exists in the list
-	providers, found, err := unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
+	// Check if provider already exists in the list (now as array of objects)
+	providers, found, err := unstructured.NestedSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
 		vitistackRWMutex.RUnlock()
 		vlog.Error("Failed to get providers from vitistack", err,
@@ -412,10 +419,19 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 	}
 
 	if !found {
-		providers = []string{}
+		providers = []any{}
 	}
 
-	providerExists := slices.Contains(providers, providerName)
+	// Check if provider already exists by name
+	providerExists := false
+	for _, p := range providers {
+		if pMap, ok := p.(map[string]any); ok {
+			if pMap["name"] == providerName {
+				providerExists = true
+				break
+			}
+		}
+	}
 	// If provider already exists, just log and return (no need for a write lock)
 	if providerExists {
 		vitistackRWMutex.RUnlock()
@@ -443,7 +459,7 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 	}
 
 	// Re-check if provider exists (in case it was added while we were switching locks)
-	providers, found, err = unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
+	providers, found, err = unstructured.NestedSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
 		vlog.Error("Failed to get providers from vitistack", err,
 			"providerType: ", providerType)
@@ -451,16 +467,29 @@ func addProviderToVitistack(vitistackObj *unstructured.Unstructured, providerNam
 	}
 
 	if !found {
-		providers = []string{}
+		providers = []any{}
 	}
 
-	providerExists = slices.Contains(providers, providerName)
+	// Re-check if provider exists by name
+	providerExists = false
+	for _, p := range providers {
+		if pMap, ok := p.(map[string]any); ok {
+			if pMap["name"] == providerName {
+				providerExists = true
+				break
+			}
+		}
+	}
+
 	if !providerExists {
-		// Add the provider to the list
-		providers = append(providers, providerName)
+		// Add the provider to the list as an object
+		providerObj := map[string]any{
+			"name": providerName,
+		}
+		providers = append(providers, providerObj)
 
 		// Update the unstructured object
-		err = unstructured.SetNestedStringSlice(latestObj.Object, providers, "spec", providerType)
+		err = unstructured.SetNestedSlice(latestObj.Object, providers, "spec", providerType)
 		if err != nil {
 			vlog.Error("Failed to set providers in vitistack", err,
 				"providerType: ", providerType)
@@ -502,8 +531,8 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 		return
 	}
 
-	// Check the current providers list
-	providers, found, err := unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
+	// Check the current providers list (now as array of objects)
+	providers, found, err := unstructured.NestedSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
 		vitistackRWMutex.RUnlock()
 		vlog.Error("Failed to get providers from vitistack", err,
@@ -520,12 +549,14 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 		return
 	}
 
-	// Check if provider exists
+	// Check if provider exists by name
 	providerIndex := -1
-	for i, provider := range providers {
-		if provider == providerName {
-			providerIndex = i
-			break
+	for i, p := range providers {
+		if pMap, ok := p.(map[string]any); ok {
+			if pMap["name"] == providerName {
+				providerIndex = i
+				break
+			}
 		}
 	}
 
@@ -555,7 +586,7 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 	}
 
 	// Re-check the providers (in case they changed while we were switching locks)
-	providers, found, err = unstructured.NestedStringSlice(latestObj.Object, "spec", providerType)
+	providers, found, err = unstructured.NestedSlice(latestObj.Object, "spec", providerType)
 	if err != nil {
 		vlog.Error("Failed to get providers from vitistack", err,
 			"providerType: ", providerType)
@@ -569,12 +600,14 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 		return
 	}
 
-	// Re-check if provider exists and find its index
+	// Re-check if provider exists and find its index by name
 	providerIndex = -1
-	for i, provider := range providers {
-		if provider == providerName {
-			providerIndex = i
-			break
+	for i, p := range providers {
+		if pMap, ok := p.(map[string]any); ok {
+			if pMap["name"] == providerName {
+				providerIndex = i
+				break
+			}
 		}
 	}
 
@@ -583,7 +616,7 @@ func removeProviderFromVitistack(vitistackObj *unstructured.Unstructured, provid
 		providers = slices.Delete(providers, providerIndex, providerIndex+1)
 
 		// Update the unstructured object
-		err = unstructured.SetNestedStringSlice(latestObj.Object, providers, "spec", providerType)
+		err = unstructured.SetNestedSlice(latestObj.Object, providers, "spec", providerType)
 		if err != nil {
 			vlog.Error("Failed to update providers in vitistack", err,
 				"providerType: ", providerType)
