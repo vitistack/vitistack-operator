@@ -2,6 +2,7 @@ package settings
 
 import (
 	"github.com/spf13/viper"
+	"github.com/vitistack/common/pkg/settings/dotenv"
 	"github.com/vitistack/vitistack-operator/pkg/consts"
 )
 
@@ -16,10 +17,10 @@ func Init() {
 	viper.SetDefault(consts.CONFIGMAPNAME, "vitistack-config")
 	viper.SetDefault(consts.NAMESPACE, "default")
 	viper.SetDefault(consts.DEVELOPMENT, false)
-	viper.SetDefault(consts.REGION, "Norway")
-	viper.SetDefault(consts.LOCATION, "Trøndelag")
-	viper.SetDefault(consts.JSON_LOGGING, true)
+	viper.SetDefault(consts.LOG_JSON_LOGGING, true)
 	viper.SetDefault(consts.LOG_LEVEL, "info")
+
+	dotenv.LoadDotEnv()
 
 	viper.AutomaticEnv()
 }

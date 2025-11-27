@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/spf13/viper"
 	"github.com/vitistack/common/pkg/clients/k8sclient"
 	"github.com/vitistack/common/pkg/loggers/vlog"
 	"github.com/vitistack/vitistack-operator/internal/cache"
@@ -17,12 +18,21 @@ import (
 	"github.com/vitistack/vitistack-operator/internal/services/dynamichandler"
 	"github.com/vitistack/vitistack-operator/internal/services/initializeservice"
 	"github.com/vitistack/vitistack-operator/internal/settings"
+	"github.com/vitistack/vitistack-operator/pkg/consts"
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
 // main is the entrypoint for the vitistack-operator binary.
 func main() {
-	_ = vlog.Setup(vlog.Options{Level: "info", ColorizeLine: true, AddCaller: true})
+	vlogsetup := vlog.Options{
+		Level:             viper.GetString(consts.LOG_LEVEL),
+		ColorizeLine:      viper.GetBool(consts.LOG_COLORIZE),
+		AddCaller:         viper.GetBool(consts.LOG_ADD_CALLER),
+		JSON:              viper.GetBool(consts.LOG_JSON_LOGGING),
+		DisableStacktrace: viper.GetBool(consts.LOG_DISABLE_STACKTRANCE),
+		UnescapeMultiline: viper.GetBool(consts.LOG_UNESCAPE_MULTILINE),
+	}
+	_ = vlog.Setup(vlogsetup)
 	defer func() {
 		_ = vlog.Sync()
 	}()

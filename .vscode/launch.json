@@ -13,10 +13,7 @@
       "args": [],
       "debugAdapter": "dlv-dap",
       "env": {
-        "GO_ENV": "development",
-        "DEVELOPMENT": "true",
-        "JSON_LOGGING": "true",
-        "LOG_LEVEL": "debug"
+        "ENV": "" // "" for base for .env, "test" for .env-test, "dev" for .env-dev, "prod" for .env-prod
       }
     }
   ]
