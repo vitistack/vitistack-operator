@@ -24,6 +24,7 @@ import (
 
 // main is the entrypoint for the vitistack-operator binary.
 func main() {
+	settings.Init()
 	vlogsetup := vlog.Options{
 		Level:             viper.GetString(consts.LOG_LEVEL),
 		ColorizeLine:      viper.GetBool(consts.LOG_COLORIZE),
@@ -45,7 +46,6 @@ func main() {
 	signal.Notify(cancelChan, syscall.SIGTERM, syscall.SIGINT)
 	var err error
 
-	settings.Init()
 	k8sclient.Init()
 	initializeservice.CheckPrerequisites()
 	cache.Cache, err = cache.VitistackCache{}.NewVitistackCache()
