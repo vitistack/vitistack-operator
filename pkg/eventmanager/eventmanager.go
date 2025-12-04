@@ -1,6 +1,8 @@
 package eventmanager
 
 import (
+	"fmt"
+	"runtime/debug"
 	"sync"
 
 	"github.com/vitistack/common/pkg/loggers/vlog"
@@ -67,6 +69,11 @@ func (em *EventManager) Publish(event ResourceEvent) {
 	em.mutex.RLock()
 	defer em.mutex.RUnlock()
 
+	if event.Resource == nil {
+		vlog.Error("Cannot publish event with nil resource", nil)
+		return
+	}
+
 	resourceKind := event.Resource.GetKind()
 
 	// Notify specific handlers for this resource kind
@@ -75,7 +82,10 @@ func (em *EventManager) Publish(event ResourceEvent) {
 			go func(h EventHandler) {
 				defer func() {
 					if r := recover(); r != nil {
-						vlog.Error("Panic in event handler", nil)
+						vlog.Error("Panic in event handler",
+							fmt.Errorf("%v", r),
+							"kind", resourceKind,
+							"stack", string(debug.Stack()))
 					}
 				}()
 				h(event)
@@ -88,7 +98,10 @@ func (em *EventManager) Publish(event ResourceEvent) {
 		go func(h EventHandler) {
 			defer func() {
 				if r := recover(); r != nil {
-					vlog.Error("Panic in global event handler", nil)
+					vlog.Error("Panic in global event handler",
+						fmt.Errorf("%v", r),
+						"kind", resourceKind,
+						"stack", string(debug.Stack()))
 				}
 			}()
 			h(event)

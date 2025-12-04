@@ -22,6 +22,8 @@ $(LOCALBIN):
 GO_VERSION=$(shell go version | sed -e 's/^[^0-9.]*\([0-9.]*\).*/\1/')
 GOSEC ?= $(LOCALBIN)/gosec
 GOSEC_VERSION ?= latest
+GOVULNCHECK ?= $(LOCALBIN)/govulncheck
+GOVULNCHECK_VERSION ?= latest
 
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
 GOLANGCI_LINT_VERSION ?= latest
@@ -135,11 +137,6 @@ vet: check-go ## Run go vet
 	@echo "${YELLOW}Running go vet...${RESET}"
 	${GO} vet ./...
 
-
-gosec: check-go ## Run gosec security scanner
-	@echo "${YELLOW}Running gosec...${RESET}"
-	gosec ./...
-	@echo "${YELLOW}gosec completed.${RESET}"
 	
 ##@ Development
 .PHONY: run 
@@ -185,6 +182,20 @@ $(GOSEC): $(LOCALBIN)
 	echo "gosec installed at $(GOSEC)"; \
 	chmod +x $(GOSEC)
 
+.PHONY: install-govulncheck
+install-govulncheck: $(GOVULNCHECK) ## Install govulncheck locally (vulnerability scanner for Go)
+$(GOVULNCHECK): $(LOCALBIN)
+	@set -e; echo "Attempting to install govulncheck $(GOVULNCHECK_VERSION)"; \
+	if ! GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) 2>/dev/null; then \
+		echo "Primary install failed, attempting install from @latest (compatibility fallback)"; \
+		if ! GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@latest; then \
+			echo "govulncheck installation failed for versions $(GOVULNCHECK_VERSION) and @latest"; \
+			exit 1; \
+		fi; \
+	fi; \
+	echo "govulncheck installed at $(GOVULNCHECK)"; \
+	chmod +x $(GOVULNCHECK)
+
 helm-install: check-kubectl ## Install Helm chart with CRDs
 	@echo "${GREEN}Installing Helm chart with CRDs...${RESET}"
 	helm upgrade --install vitistack-operator ./charts/vitistack-operator --namespace default
@@ -205,9 +216,13 @@ update-deps: ## Update dependencies
 	@echo "Dependencies updated!"
 
 ##@ Security
-.PHONY: go-security-scan
-go-security-scan: install-security-scanner ## Run gosec security scan (fails on findings)
+.PHONY: gosec
+gosec: install-security-scanner ## Run gosec security scan (fails on findings)
 	$(GOSEC) ./...
+
+.PHONY: govulncheck
+govulncheck: install-govulncheck ## Run govulncheck vulnerability scan (fails on findings)
+	$(GOVULNCHECK) ./...
 
 .PHONY: go-security-scan-docker
 go-security-scan-docker: ## Run gosec scan using official container (alternative if local install fails)

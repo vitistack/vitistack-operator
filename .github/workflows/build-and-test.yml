@@ -73,7 +73,12 @@ jobs:
           path: coverage.out
           retention-days: 7
 
-      - name: Run security scan
+      - name: Run gosec
         run: |
-          echo "Running security scan"
-          make go-security-scan
+          echo "Running gosec security scan"
+          make gosec
+
+      - name: Run govulncheck
+        run: |
+          echo "Running govulncheck vulnerability scan"
+          make govulncheck

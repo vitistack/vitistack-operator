@@ -5,10 +5,11 @@ import (
 	"fmt"
 
 	"github.com/vitistack/common/pkg/loggers/vlog"
-	"github.com/vitistack/vitistack-operator/internal/cache"
+	localcache "github.com/vitistack/vitistack-operator/internal/cache"
 	"github.com/vitistack/vitistack-operator/internal/clients/dynamicclienthandler"
 	"github.com/vitistack/vitistack-operator/pkg/eventmanager"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/tools/cache"
 )
 
 type handler struct {
@@ -20,7 +21,15 @@ func NewDynamicClientHandler() dynamicclienthandler.DynamicClientHandler {
 }
 
 func (handler) AddResource(obj any) {
-	unstructuredObject := obj.(*unstructured.Unstructured)
+	if obj == nil {
+		vlog.Error("AddResource called with nil object", nil)
+		return
+	}
+	unstructuredObject, ok := obj.(*unstructured.Unstructured)
+	if !ok || unstructuredObject == nil {
+		vlog.Error("AddResource: failed to cast object to Unstructured", nil)
+		return
+	}
 	vlog.Info(fmt.Sprintf("AddResource called - name: %s, kind: %s, namespace: %s",
 		unstructuredObject.GetName(),
 		unstructuredObject.GetKind(),
@@ -36,7 +45,7 @@ func (handler) AddResource(obj any) {
 		vlog.Info(fmt.Sprintf("Using ConfigMap name as cache key: %s", cacheKey))
 	}
 
-	err := cache.Cache.Set(context.TODO(), cacheKey, unstructuredObject.Object)
+	err := localcache.Cache.Set(context.TODO(), cacheKey, unstructuredObject.Object)
 	if err != nil {
 		vlog.Error("Error setting cache:", err)
 		return
@@ -55,7 +64,29 @@ func (handler) AddResource(obj any) {
 }
 
 func (handler) DeleteResource(obj any) {
-	unstructuredObject := obj.(*unstructured.Unstructured)
+	if obj == nil {
+		vlog.Error("DeleteResource called with nil object", nil)
+		return
+	}
+
+	// Handle tombstone objects (deleted final state unknown)
+	var unstructuredObject *unstructured.Unstructured
+	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		vlog.Info("DeleteResource: processing tombstone object")
+		unstructuredObject, ok = tombstone.Obj.(*unstructured.Unstructured)
+		if !ok || unstructuredObject == nil {
+			vlog.Error("DeleteResource: failed to cast tombstone object to Unstructured", nil)
+			return
+		}
+	} else {
+		var castOk bool
+		unstructuredObject, castOk = obj.(*unstructured.Unstructured)
+		if !castOk || unstructuredObject == nil {
+			vlog.Error("DeleteResource: failed to cast object to Unstructured", nil)
+			return
+		}
+	}
+
 	vlog.Info(fmt.Sprintf("Delete Resource, name: %s, kind: %s", unstructuredObject.GetName(), unstructuredObject.GetKind()))
 
 	// Determine cache key based on resource kind
@@ -68,7 +99,7 @@ func (handler) DeleteResource(obj any) {
 		vlog.Info(fmt.Sprintf("Using ConfigMap name as cache key: %s", cacheKey))
 	}
 
-	err := cache.Cache.Delete(context.TODO(), cacheKey)
+	err := localcache.Cache.Delete(context.TODO(), cacheKey)
 	if err != nil {
 		vlog.Error("Error deleting cache:", err)
 		return
@@ -83,7 +114,15 @@ func (handler) DeleteResource(obj any) {
 }
 
 func (handler) UpdateResource(_ any, obj any) {
-	unstructuredObject := obj.(*unstructured.Unstructured)
+	if obj == nil {
+		vlog.Error("UpdateResource called with nil object", nil)
+		return
+	}
+	unstructuredObject, ok := obj.(*unstructured.Unstructured)
+	if !ok || unstructuredObject == nil {
+		vlog.Error("UpdateResource: failed to cast object to Unstructured", nil)
+		return
+	}
 	vlog.Info(fmt.Sprintf("UpdateResource called - name: %s, kind: %s, namespace: %s",
 		unstructuredObject.GetName(),
 		unstructuredObject.GetKind(),
@@ -99,7 +138,7 @@ func (handler) UpdateResource(_ any, obj any) {
 		vlog.Info(fmt.Sprintf("Using ConfigMap name as cache key: %s", cacheKey))
 	}
 
-	err := cache.Cache.Set(context.TODO(), cacheKey, unstructuredObject.Object)
+	err := localcache.Cache.Set(context.TODO(), cacheKey, unstructuredObject.Object)
 	if err != nil {
 		vlog.Error("Error updating cache:", err)
 		return

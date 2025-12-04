@@ -23,7 +23,12 @@ jobs:
         run: |
           go mod download
 
-      - name: Run security scan
-        uses: golang/govulncheck-action@v1
-        with:
-          go-version-file: go.mod
+      - name: Run gosec
+        run: |
+          echo "Running gosec security scan"
+          make gosec
+
+      - name: Run govulncheck
+        run: |
+          echo "Running govulncheck vulnerability scan"
+          make govulncheck

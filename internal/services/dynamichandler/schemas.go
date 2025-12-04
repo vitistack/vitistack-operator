@@ -17,6 +17,21 @@ func (handler) GetSchemas() []schema.GroupVersionResource {
 			Resource: "machineproviders",
 		},
 		{
+			Group:    "vitistack.io",
+			Version:  "v1alpha1",
+			Resource: "machineclasses",
+		},
+		{
+			Group:    "vitistack.io",
+			Version:  "v1alpha1",
+			Resource: "kubernetesclusters",
+		},
+		{
+			Group:    "vitistack.io",
+			Version:  "v1alpha1",
+			Resource: "machines",
+		},
+		{
 			Group:    "",
 			Version:  "v1",
 			Resource: "configmaps",
