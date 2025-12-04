@@ -32,12 +32,6 @@ func updateVitistackStatusWithCluster(event eventmanager.ResourceEvent) {
 	}
 
 	clusterName := event.Resource.GetName()
-	namespace := event.Resource.GetNamespace()
-
-	vlog.Info("Processing KubernetesCluster event",
-		"type: ", string(event.Type),
-		"name: ", clusterName,
-		"namespace: ", namespace)
 
 	// Get or create the vitistack CRD
 	vitistackCrdName := viper.GetString(consts.VITISTACKCRDNAME)
@@ -57,8 +51,6 @@ func updateVitistackStatusWithCluster(event eventmanager.ResourceEvent) {
 		addClusterToVitistackStatus(vitistackObj, clusterName, clusterMetadata)
 	case eventmanager.EventDelete:
 		removeClusterFromVitistackStatus(vitistackObj, clusterName)
-	default:
-		vlog.Info("Unhandled event type", "type: ", string(event.Type))
 	}
 }
 
@@ -144,6 +136,16 @@ func addClusterToVitistackStatus(vitistackObj *unstructured.Unstructured, cluste
 	}
 
 	if clusterExists {
+		// Check if metadata has actually changed (skip discoveredAt comparison)
+		existingCluster, ok := clusters[clusterIndex].(map[string]any)
+		if ok && clusterMetadataEqual(existingCluster, metadata) {
+			// No changes, skip update silently
+			return
+		}
+		// Preserve original discoveredAt timestamp
+		if existingDiscoveredAt, ok := existingCluster["discoveredAt"]; ok {
+			metadata["discoveredAt"] = existingDiscoveredAt
+		}
 		// Update existing cluster
 		clusters[clusterIndex] = metadata
 	} else {

@@ -29,13 +29,10 @@ func updateVitistackStatusWithMachine(event eventmanager.ResourceEvent) {
 		return
 	}
 
-	machineName := event.Resource.GetName()
-	namespace := event.Resource.GetNamespace()
-
-	vlog.Info("Processing Machine event",
-		"type: ", string(event.Type),
-		"name: ", machineName,
-		"namespace: ", namespace)
+	// Only update count on Add or Delete events
+	if event.Type != eventmanager.EventAdd && event.Type != eventmanager.EventDelete {
+		return
+	}
 
 	// Get or create the vitistack CRD
 	vitistackCrdName := viper.GetString(consts.VITISTACKCRDNAME)
@@ -46,24 +43,23 @@ func updateVitistackStatusWithMachine(event eventmanager.ResourceEvent) {
 		return
 	}
 
-	// Handle based on event type - we just need to update the count
-	switch event.Type {
-	case eventmanager.EventAdd:
-		incrementMachineCount(vitistackObj)
-	case eventmanager.EventDelete:
-		decrementMachineCount(vitistackObj)
-	case eventmanager.EventUpdate:
-		// No count change needed for updates
-		vlog.Info("Machine updated, no count change needed",
-			"name: ", machineName)
-	default:
-		vlog.Info("Unhandled event type", "type: ", string(event.Type))
-	}
+	// Count actual machines from cluster and update status
+	updateMachineCount(vitistackObj)
 }
 
-// incrementMachineCount increments the activeMachines count in status
-func incrementMachineCount(vitistackObj *unstructured.Unstructured) {
+// updateMachineCount counts actual machines from the cluster and updates the status
+func updateMachineCount(vitistackObj *unstructured.Unstructured) {
 	vitistackName := vitistackObj.GetName()
+
+	// List all machines from the cluster
+	machineList, err := k8sclient.DynamicClient.Resource(machineGVR).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		vlog.Error("Failed to list machines", err)
+		return
+	}
+
+	// Count the machines
+	actualCount := int64(len(machineList.Items))
 
 	// Acquire write lock for the update operation
 	vitistackRWMutex.Lock()
@@ -80,8 +76,10 @@ func incrementMachineCount(vitistackObj *unstructured.Unstructured) {
 	// Get current count from status
 	currentCount, _, _ := unstructured.NestedInt64(latestObj.Object, "status", "activeMachines")
 
-	// Increment count
-	newCount := currentCount + 1
+	// Only update if count has changed
+	if currentCount == actualCount {
+		return
+	}
 
 	// Ensure status exists
 	status, _, _ := unstructured.NestedMap(latestObj.Object, "status")
@@ -90,7 +88,7 @@ func incrementMachineCount(vitistackObj *unstructured.Unstructured) {
 	}
 
 	// Update activeMachines count
-	status["activeMachines"] = newCount
+	status["activeMachines"] = actualCount
 
 	// Set the updated status
 	err = unstructured.SetNestedField(latestObj.Object, status, "status")
@@ -107,61 +105,8 @@ func incrementMachineCount(vitistackObj *unstructured.Unstructured) {
 		return
 	}
 
-	vlog.Info("Incremented activeMachines count in Viti stack status",
+	vlog.Info("Updated activeMachines count in Viti stack status",
 		"name: ", vitistackName,
-		"count: ", newCount)
-}
-
-// decrementMachineCount decrements the activeMachines count in status
-func decrementMachineCount(vitistackObj *unstructured.Unstructured) {
-	vitistackName := vitistackObj.GetName()
-
-	// Acquire write lock for the update operation
-	vitistackRWMutex.Lock()
-	defer vitistackRWMutex.Unlock()
-
-	// Get the latest version
-	latestObj, err := k8sclient.DynamicClient.Resource(vitistackGVR).Get(context.TODO(), vitistackName, metav1.GetOptions{})
-	if err != nil {
-		vlog.Error("Failed to get Viti stack CRD", err,
-			"name: ", vitistackName)
-		return
-	}
-
-	// Get current count from status
-	currentCount, _, _ := unstructured.NestedInt64(latestObj.Object, "status", "activeMachines")
-
-	// Decrement count (don't go below 0)
-	newCount := currentCount - 1
-	if newCount < 0 {
-		newCount = 0
-	}
-
-	// Ensure status exists
-	status, _, _ := unstructured.NestedMap(latestObj.Object, "status")
-	if status == nil {
-		status = map[string]any{}
-	}
-
-	// Update activeMachines count
-	status["activeMachines"] = newCount
-
-	// Set the updated status
-	err = unstructured.SetNestedField(latestObj.Object, status, "status")
-	if err != nil {
-		vlog.Error("Failed to set status in vitistack", err)
-		return
-	}
-
-	// Update the vitistack resource status
-	_, err = k8sclient.DynamicClient.Resource(vitistackGVR).UpdateStatus(context.TODO(), latestObj, metav1.UpdateOptions{})
-	if err != nil {
-		vlog.Error("Failed to update Viti stack CRD status after decrement", err,
-			"name: ", vitistackName)
-		return
-	}
-
-	vlog.Info("Decremented activeMachines count in Viti stack status",
-		"name: ", vitistackName,
-		"count: ", newCount)
+		"previousCount: ", currentCount,
+		"newCount: ", actualCount)
 }

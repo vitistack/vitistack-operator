@@ -19,10 +19,6 @@ func handleConfigMapEvents(event eventmanager.ResourceEvent) {
 		vlog.Error("Resource is nil in ConfigMap event", nil)
 		return
 	}
-	vlog.Info("Received ConfigMap event",
-		"type: ", string(event.Type),
-		"name: ", event.Resource.GetName(),
-		"namespace: ", event.Resource.GetNamespace())
 
 	configMapName := viper.GetString(consts.CONFIGMAPNAME)
 	if event.Resource.GetName() != configMapName {
@@ -75,15 +71,6 @@ func updateVitistackFromConfigMap(event eventmanager.ResourceEvent) {
 	provider := configMapData["provider"]
 	description := configMapData["description"]
 	infrastructure := configMapData["infrastructure"]
-
-	vlog.Info("Processing ConfigMap update for Vitistack",
-		"vitistackName: ", vitistackName,
-		"region: ", region,
-		"zone: ", zone,
-		"country: ", country,
-		"provider: ", provider,
-		"infrastructure: ", infrastructure,
-		"namespace: ", event.Resource.GetNamespace())
 
 	if vitistackName == "" {
 		vlog.Error("Vitistack name is empty in ConfigMap", nil)
@@ -163,7 +150,6 @@ func updateVitistackFromConfigMap(event eventmanager.ResourceEvent) {
 
 	// Only update if changes were made
 	if !updateNeeded {
-		vlog.Info("No updates needed for Viti stack CRD")
 		return
 	}
 

@@ -42,13 +42,6 @@ func updateVitistackStatusWithProvider(event eventmanager.ResourceEvent, provide
 	}
 
 	providerName := event.Resource.GetName()
-	namespace := event.Resource.GetNamespace()
-
-	vlog.Info("Processing provider event",
-		"type: ", string(event.Type),
-		"providerType: ", providerType,
-		"name: ", providerName,
-		"namespace: ", namespace)
 
 	// Get or create the vitistack CRD
 	vitistackCrdName := viper.GetString(consts.VITISTACKCRDNAME)
@@ -68,8 +61,6 @@ func updateVitistackStatusWithProvider(event eventmanager.ResourceEvent, provide
 		addProviderToVitistackStatus(vitistackObj, providerName, providerType, providerMetadata)
 	case eventmanager.EventDelete:
 		removeProviderFromVitistackStatus(vitistackObj, providerName, providerType)
-	default:
-		vlog.Info("Unhandled event type", "type: ", string(event.Type))
 	}
 }
 
@@ -146,6 +137,15 @@ func addProviderToVitistackStatus(vitistackObj *unstructured.Unstructured, provi
 	}
 
 	if providerExists {
+		// Check if metadata has actually changed
+		existingProvider, ok := providers[providerIndex].(map[string]any)
+		if ok && providerMetadataEqual(existingProvider, metadata) {
+			return
+		}
+		// Preserve original discoveredAt timestamp
+		if existingDiscoveredAt, ok := existingProvider["discoveredAt"]; ok {
+			metadata["discoveredAt"] = existingDiscoveredAt
+		}
 		// Update existing provider with new metadata
 		providers[providerIndex] = metadata
 	} else {
