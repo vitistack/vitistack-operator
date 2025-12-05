@@ -15,3 +15,6 @@ annotations:
     - kind: MachineProvider
       name: machineproviders.vitistack.io
       version: v1alpha1
+
+# Chart icon - displayed in Helm repository UIs like ArtifactHub
+icon: https://vitistack.io/images/viti1.svg

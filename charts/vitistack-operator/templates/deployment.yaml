@@ -53,6 +53,18 @@ spec:
               value: {{ .Values.config.region | default "Norway" | quote }}
             - name: LOCATION
               value: {{ .Values.config.location | default "Trøndelag" | quote }}
+            - name: LOG_JSON_LOGGING
+              value: {{ .Values.config.logging.jsonLogging | default true | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.config.logging.level | default "info" | quote }}
+            - name: LOG_COLORIZE
+              value: {{ .Values.config.logging.colorize | default false | quote }}
+            - name: LOG_ADD_CALLER
+              value: {{ .Values.config.logging.addCaller | default false | quote }}
+            - name: LOG_DISABLE_STACKTRANCE
+              value: {{ .Values.config.logging.disableStacktrace | default true | quote }}
+            - name: LOG_UNESCAPE_MULTILINE
+              value: {{ .Values.config.logging.unescapeMultiline | default false | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

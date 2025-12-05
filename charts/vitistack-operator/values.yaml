@@ -29,6 +29,13 @@ config:
   development: false
   region: "Norway"
   location: "Trøndelag"
+  logging:
+    jsonLogging: true
+    level: "info"
+    colorize: false
+    addCaller: true
+    disableStacktrace: false
+    unescapeMultiline: false
 
 podAnnotations: {}
 podLabels: {}
