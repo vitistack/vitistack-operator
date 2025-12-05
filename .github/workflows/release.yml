@@ -123,23 +123,12 @@ jobs:
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v*}"
 
-          cat << EOF > .github/yq-script.yaml
-          - command: update
-            path: version
-            value: "${VERSION}"
-          - command: update
-            path: appVersion
-            value: "${VERSION}"
-          EOF
+          # Update Chart.yaml
+          yq -i ".version = \"${VERSION}\"" charts/vitistack-operator/Chart.yaml
+          yq -i ".appVersion = \"${VERSION}\"" charts/vitistack-operator/Chart.yaml
 
-          cat << EOF > .github/yq-values-script.yaml
-          - command: update
-            path: image.tag
-            value: "${VERSION}"
-          EOF
-
-          npx -y yq-cli write --file=.github/yq-script.yaml charts/vitistack-operator/Chart.yaml
-          npx -y yq-cli write --file=.github/yq-values-script.yaml charts/vitistack-operator/values.yaml
+          # Update values.yaml
+          yq -i ".image.tag = \"${VERSION}\"" charts/vitistack-operator/values.yaml
 
       - name: Package Helm chart
         run: |
