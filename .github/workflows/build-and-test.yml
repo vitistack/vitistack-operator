@@ -26,7 +26,7 @@ jobs:
           cache-dependency-path: go.sum
 
       - name: Restore build artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: bin/
           key: ${{ runner.os }}-build-${{ github.sha }}
@@ -50,7 +50,7 @@ jobs:
           make lint
 
       - name: Cache build artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: bin/
           key: ${{ runner.os }}-build-${{ github.sha }}
