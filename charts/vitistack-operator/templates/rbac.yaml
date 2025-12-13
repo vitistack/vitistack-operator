@@ -10,10 +10,10 @@ rules:
   resources: ["configmaps"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["vitistack.io"]
-  resources: ["kubernetesproviders", "machineproviders", "vitistacks", "kubernetesclusters", "machines"]
+  resources: ["kubernetesproviders", "machineproviders", "vitistacks", "kubernetesclusters", "machines", "machineclasses"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["vitistack.io"]
-  resources: ["kubernetesproviders/status", "machineproviders/status", "vitistacks/status", "kubernetesclusters/status", "machines/status"]
+  resources: ["kubernetesproviders/status", "machineproviders/status", "vitistacks/status", "kubernetesclusters/status", "machines/status", "machineclasses/status"]
   verbs: ["get", "update", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
