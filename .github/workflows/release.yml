@@ -59,6 +59,9 @@ jobs:
           name: binaries
           path: dist/
 
+      - name: Make binaries executable
+        run: chmod +x dist/vitistack-operator-*
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
