@@ -23,19 +23,23 @@ serviceAccount:
 rbac:
   create: true
 
-config:
-  vitistackCrdName: "vitistack"
-  configMapName: "vitistack-config"
-  development: false
-  region: "Norway"
-  location: "Trøndelag"
-  logging:
-    jsonLogging: true
-    level: "info"
-    colorize: false
-    addCaller: true
-    disableStacktrace: false
-    unescapeMultiline: false
+vitistackCrdName: "vitistack"
+configMapName: "vitistack-config"
+development: false
+name: "test-stack"
+description: "A test vitistack deployment"
+region: "central"
+country: "no"
+zone: "az1"
+infrastructure: "test"
+
+logging:
+  jsonLogging: true
+  level: "info"
+  colorize: false
+  addCaller: true
+  disableStacktrace: false
+  unescapeMultiline: false
 
 podAnnotations: {}
 podLabels: {}
@@ -45,6 +49,8 @@ podSecurityContext:
   fsGroup: 2000
   runAsUser: 1001
   runAsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
   capabilities:
@@ -53,6 +59,7 @@ securityContext:
   readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1000
+  allowPrivilegeEscalation: false
 
 service:
   type: NodePort

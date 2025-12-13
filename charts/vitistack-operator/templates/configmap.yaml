@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMapName }}
+  labels:
+    {{- include "vitistack-operator.labels" . | nindent 4 }}
+data:
+  # Required configuration keys for the vitistack-operator
+  name: {{ .Values.name | quote }}
+  description: {{ .Values.description | quote }}
+  region: {{ .Values.region | quote }}
+  country: {{ .Values.country | quote }}
+  zone: {{ .Values.zone | quote }}
+  infrastructure: {{ .Values.infrastructure | quote }}

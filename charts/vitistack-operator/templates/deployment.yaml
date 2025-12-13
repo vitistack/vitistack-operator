@@ -42,29 +42,25 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: VITISTACKCRDNAME
-              value: {{ .Values.config.vitistackCrdName | default "vitistack" | quote }}
+              value: {{ .Values.vitistackCrdName | default "vitistack" | quote }}
             - name: CONFIGMAPNAME
-              value: {{ .Values.config.configMapName | default "vitistack-config" | quote }}
+              value: {{ .Values.configMapName | default "vitistack-config" | quote }}
             - name: NAMESPACE
               value: {{ .Release.Namespace | quote }}
             - name: DEVELOPMENT
-              value: {{ .Values.config.development | default false | quote }}
-            - name: REGION
-              value: {{ .Values.config.region | default "Norway" | quote }}
-            - name: LOCATION
-              value: {{ .Values.config.location | default "Trøndelag" | quote }}
+              value: {{ .Values.development | default false | quote }}
             - name: LOG_JSON_LOGGING
-              value: {{ .Values.config.logging.jsonLogging | default true | quote }}
+              value: {{ .Values.logging.jsonLogging | default true | quote }}
             - name: LOG_LEVEL
-              value: {{ .Values.config.logging.level | default "info" | quote }}
+              value: {{ .Values.logging.level | default "info" | quote }}
             - name: LOG_COLORIZE
-              value: {{ .Values.config.logging.colorize | default false | quote }}
+              value: {{ .Values.logging.colorize | default false | quote }}
             - name: LOG_ADD_CALLER
-              value: {{ .Values.config.logging.addCaller | default false | quote }}
+              value: {{ .Values.logging.addCaller | default false | quote }}
             - name: LOG_DISABLE_STACKTRANCE
-              value: {{ .Values.config.logging.disableStacktrace | default true | quote }}
+              value: {{ .Values.logging.disableStacktrace | default true | quote }}
             - name: LOG_UNESCAPE_MULTILINE
-              value: {{ .Values.config.logging.unescapeMultiline | default false | quote }}
+              value: {{ .Values.logging.unescapeMultiline | default false | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
