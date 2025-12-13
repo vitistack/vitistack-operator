@@ -63,7 +63,7 @@ securityContext:
 
 service:
   type: NodePort
-  port: 8080
+  port: 9991
 
 ingress:
   enabled: false
@@ -87,11 +87,11 @@ resources:
 livenessProbe:
   httpGet:
     path: /health
-    port: 8080
+    port: 9991
 readinessProbe:
   httpGet:
     path: /health
-    port: 8080
+    port: 9991
 
 autoscaling:
   enabled: false
