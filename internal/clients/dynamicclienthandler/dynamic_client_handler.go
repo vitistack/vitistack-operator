@@ -23,23 +23,25 @@ func Start(discoveryClient *discovery.DiscoveryClient, dynamicClient dynamic.Int
 	vlog.Info("Starting dynamic watchers")
 
 	schemas := dynamichandler.GetSchemas()
-	vlog.Info("Found schemas to watch", "count", len(schemas))
+	vlog.Info(fmt.Sprintf("Found schemas to watch count=%d", len(schemas)))
 
 	for _, schema := range schemas {
-		vlog.Info("Checking resource availability",
-			"group", schema.Group,
-			"version", schema.Version,
-			"resource", schema.Resource)
+		vlog.Info(fmt.Sprintf(
+			"Checking resource availability group=%s version=%s resource=%s",
+			schema.Group,
+			schema.Version,
+			schema.Resource,
+		))
 
 		check, err := discovery.IsResourceEnabled(discoveryClient, schema)
 		if err != nil {
 			vlog.Error("Could not query resources from cluster", err)
 		}
 		if check {
-			vlog.Info("Resource is available, creating watcher", "resource", schema.Resource)
+			vlog.Info(fmt.Sprintf("Resource is available, creating watcher resource=%s", schema.Resource))
 			controller := newDynamicWatcher(dynamichandler, dynamicClient, schema)
 			go func(res string) {
-				vlog.Info("Starting watcher for resource", "resource", res)
+				vlog.Info(fmt.Sprintf("Starting watcher for resource %s", res))
 				controller.Run(stop)
 			}(schema.Resource)
 		} else {

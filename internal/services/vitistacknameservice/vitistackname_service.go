@@ -21,20 +21,17 @@ func GetName(ctx context.Context) (string, error) {
 	configMapName := viper.GetString(consts.CONFIGMAPNAME)
 	namespace := viper.GetString(consts.NAMESPACE)
 
-	vlog.Info("Getting datacenter name",
-		"configMapName: ", configMapName,
-		"namespace: ", namespace)
+	vlog.Debug(fmt.Sprintf("Getting datacenter name configMapName=%s namespace=%s", configMapName, namespace))
 
 	// Try to get from cache first
 	configData, err := getConfigDataFromCache(ctx, namespace, configMapName)
 	if err == nil {
-		vlog.Info("Retrieved ConfigMap data from cache",
-			"name: ", configData["name"])
+		vlog.Debug(fmt.Sprintf("Retrieved ConfigMap data from cache name=%s", configData["name"]))
 		// If cache is valid, return the data
 		return configData["name"], nil
 	}
 
-	vlog.Info("Cache miss or error, falling back to Kubernetes API", "error: ", err)
+	vlog.Debug(fmt.Sprintf("Cache miss or error, falling back to Kubernetes API error=%v", err))
 
 	// If cache fails, get from Kubernetes API and update cache
 	configData, err = getConfigDataFromK8s(ctx, namespace, configMapName)
@@ -42,8 +39,7 @@ func GetName(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to get config data: %w", err)
 	}
 
-	vlog.Info("Retrieved ConfigMap data from Kubernetes API",
-		"name: ", configData["name"])
+	vlog.Info(fmt.Sprintf("Retrieved ConfigMap data from Kubernetes API name=%s", configData["name"]))
 
 	// Update cache with fresh data from Kubernetes API
 	cacheKey := buildCacheKey(namespace, configMapName)
@@ -53,7 +49,7 @@ func GetName(ctx context.Context) (string, error) {
 		if err != nil {
 			vlog.Error("Failed to update cache with fresh ConfigMap data:", err)
 		} else {
-			vlog.Info("Updated cache with fresh ConfigMap data")
+			vlog.Debug("Updated cache with fresh ConfigMap data")
 		}
 	}
 
@@ -68,7 +64,7 @@ func InvalidateCache(ctx context.Context, namespace, name string) error {
 		vlog.Error("Failed to invalidate cache:", err)
 		return err
 	}
-	vlog.Info("Cache invalidated successfully", "key: ", cacheKey)
+	vlog.Debug(fmt.Sprintf("Cache invalidated successfully key=%s", cacheKey))
 	return nil
 }
 

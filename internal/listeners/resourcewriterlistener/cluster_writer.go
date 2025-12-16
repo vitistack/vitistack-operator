@@ -180,14 +180,10 @@ func addClusterToVitistackStatus(vitistackObj *unstructured.Unstructured, cluste
 		return
 	}
 
-	if clusterExists {
-		vlog.Info("Updated cluster in Viti stack status",
-			"name: ", vitistackName,
-			"cluster: ", clusterName)
-	} else {
+	if !clusterExists {
 		vlog.Info("Added cluster to Viti stack status",
-			"name: ", vitistackName,
-			"cluster: ", clusterName)
+			" name: ", vitistackName,
+			" cluster: ", clusterName)
 	}
 }
 
