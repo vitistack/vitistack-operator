@@ -6,13 +6,13 @@ on:
   pull_request:
     branches: ['main', 'master']
 
-permissions:
-  contents: read
-  packages: read
+env:
+  GO_VERSION_FILE: go.mod
 
 jobs:
-  build-test-checksecurity:
-    name: Build,lint,test and check security
+  # First job: Build and generate artifacts needed by other jobs
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -21,64 +21,93 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version-file: ${{ env.GO_VERSION_FILE }}
           cache: true
           cache-dependency-path: go.sum
 
-      - name: Restore build artifacts
+      - name: Build
+        run: make build
+
+  # Lint runs in parallel with test and security
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ${{ env.GO_VERSION_FILE }}
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Cache golangci-lint
         uses: actions/cache@v5
         with:
-          path: bin/
-          key: ${{ runner.os }}-build-${{ github.sha }}
+          path: |
+            bin/golangci-lint*
+            ~/.cache/golangci-lint
+          key: ${{ runner.os }}-golangci-lint-${{ hashFiles('go.mod') }}
           restore-keys: |
-            ${{ runner.os }}-build-
-
-      - name: Install dependencies
-        run: |
-          go mod download
-
-      - name: Build
-        run: |
-          VERSION="${{ github.ref_type == 'tag' && github.ref_name || '0.0.0' }}"
-          VERSION="${VERSION#v*}"
-          echo "Version $VERSION"
-          make build
-          touch cmd/isbuilt
+            ${{ runner.os }}-golangci-lint-
 
       - name: Lint
-        run: |
-          make lint
+        run: make lint
 
-      - name: Cache build artifacts
-        uses: actions/cache@v5
+  # Test runs in parallel
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
-          path: bin/
-          key: ${{ runner.os }}-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-
-      - name: Setup test environment
-        run: |
-          make test
+          go-version-file: ${{ env.GO_VERSION_FILE }}
+          cache: true
+          cache-dependency-path: go.sum
 
       - name: Run tests
-        run: |
-          make test-coverage
-          go tool cover -func=coverage.out
+        run: make test
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: coverage
-          path: coverage.out
+          path: cover.out
           retention-days: 7
 
+  # Security scans run in parallel
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ${{ env.GO_VERSION_FILE }}
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Cache security tools
+        uses: actions/cache@v5
+        with:
+          path: |
+            bin/gosec*
+            bin/govulncheck*
+          key: ${{ runner.os }}-security-tools-${{ hashFiles('go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-security-tools-
+
       - name: Run gosec
-        run: |
-          echo "Running gosec security scan"
-          make gosec
+        run: make gosec
 
       - name: Run govulncheck
-        run: |
-          echo "Running govulncheck vulnerability scan"
-          make govulncheck
+        run: make govulncheck

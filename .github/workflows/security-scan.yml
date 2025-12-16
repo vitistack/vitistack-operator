@@ -19,10 +19,6 @@ jobs:
           cache: true
           cache-dependency-path: go.sum
 
-      - name: Install dependencies
-        run: |
-          go mod download
-
       - name: Run gosec
         run: |
           echo "Running gosec security scan"
