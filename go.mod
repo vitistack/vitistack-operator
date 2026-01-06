@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.21.0
-	github.com/vitistack/common v0.8.26
+	github.com/vitistack/common v0.8.27
 	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.35.0
 	k8s.io/apimachinery v0.35.0

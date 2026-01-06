@@ -177,8 +177,8 @@ github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.3.1 h1:waO7eEiFDwidsBN6agj1vJQ4AG7lh2yqXyOXqhgQuyY=
 github.com/ugorji/go/codec v1.3.1/go.mod h1:pRBVtBSKl77K30Bv8R2P+cLSGaTtex6fsA2Wjqmfxj4=
-github.com/vitistack/common v0.8.26 h1:27ytzwBlprCJ8PxnSSM59LZg3L5lRhd52GtnP7vt6do=
-github.com/vitistack/common v0.8.26/go.mod h1:AgOOVB7Uvzg7JcIdEgX1Li5NW05MqN+gyQww4e1ypLw=
+github.com/vitistack/common v0.8.27 h1:ph5TDnbwwb53DNqL7WIUU24gyFyodYiqmV5buj6TbF0=
+github.com/vitistack/common v0.8.27/go.mod h1:6tl3a9tCzrO+Ni3KifYxSbH92YavUAZ00mwgeAvwH8A=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 go.opentelemetry.io/otel v1.39.0 h1:8yPrr/S0ND9QEfTfdP9V+SiwT4E0G7Y5MO7p85nis48=
