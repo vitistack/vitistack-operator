@@ -48,3 +48,6 @@ coverage.html
 hack/vitistack-crds/
 .env*
 !.env.example
+
+# SBOM output
+sbom/
