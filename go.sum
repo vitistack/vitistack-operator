@@ -1,7 +1,7 @@
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=
 github.com/Masterminds/semver/v3 v3.4.0/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
-github.com/NorskHelsenett/ror v1.11.0 h1:7mP17gNWOHPuRk8GnUsJhXGAe9TkPl+C1c+/pSa6JbU=
-github.com/NorskHelsenett/ror v1.11.0/go.mod h1:KASVkk1w5oRI2PEQZDmn5icVLUmlI4Q3RkMVctPJxsU=
+github.com/NorskHelsenett/ror v1.13.0 h1:gCGsaSpuhLB2B1PC8t2i5sbdiRNYR5pNiA8aJXFUTyc=
+github.com/NorskHelsenett/ror v1.13.0/go.mod h1:ipk1g30OV49C0NCnpkEG+e/MHd6sjnzmSFHpzoZi0IM=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
@@ -135,8 +135,8 @@ github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8=
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
-github.com/vitistack/common v0.8.34 h1:YV72f4Bd9c75F3mxI8vOKAkmD6q4tXBY2iyLj/v+f0w=
-github.com/vitistack/common v0.8.34/go.mod h1:zYGcW1FTNbehac9BYILVmbTggiUi1c+H8zkZ16T1BsM=
+github.com/vitistack/common v0.8.35 h1:9MCZdy2Tfng6pwqrYbfIHtN9bvVHXfy6GPuWJDQdqQY=
+github.com/vitistack/common v0.8.35/go.mod h1:zUKchIg9mcZSsGArHk75S0kCBQd+KRROMeFXWdzSKS4=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 go.opentelemetry.io/otel v1.39.0 h1:8yPrr/S0ND9QEfTfdP9V+SiwT4E0G7Y5MO7p85nis48=

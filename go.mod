@@ -1,13 +1,13 @@
 module github.com/vitistack/vitistack-operator
 
-go 1.25.5
+go 1.25.6
 
 require (
-	github.com/NorskHelsenett/ror v1.11.0
+	github.com/NorskHelsenett/ror v1.13.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.21.0
-	github.com/vitistack/common v0.8.34
+	github.com/vitistack/common v0.8.35
 	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.35.0
 	k8s.io/apimachinery v0.35.0
