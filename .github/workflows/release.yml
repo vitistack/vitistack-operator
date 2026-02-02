@@ -50,17 +50,17 @@ jobs:
   build-image:
     name: Build Image (${{ matrix.platform }})
     needs: build-binaries
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: linux/amd64
             arch: amd64
-          # Uncomment for ARM support (requires QEMU on private repos, or native runner on public repos)
-          # - platform: linux/arm64
-          #   arch: arm64
-          #   # runner: ubuntu-24.04-arm  # Use this instead of ubuntu-latest for public repos
+            runs_on: ubuntu-latest
+          - platform: linux/arm64
+            arch: arm64
+            runs_on: ubuntu-24.04-arm
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
