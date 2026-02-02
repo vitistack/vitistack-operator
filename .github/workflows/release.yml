@@ -46,21 +46,19 @@ jobs:
           path: dist/vitistack-operator-*
           retention-days: 1
 
-  # Build OCI images per architecture (add ARM back when repo is public or ARM runners support private repos)
+  # Build OCI images per architecture using native runners
   build-image:
     name: Build Image (${{ matrix.platform }})
     needs: build-binaries
-    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.platform == 'linux/arm64' && (github.event.repository.private && 'ubuntu-latest' || 'ubuntu-24.04-arm') || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: linux/amd64
             arch: amd64
-            runs_on: ubuntu-latest
           - platform: linux/arm64
             arch: arm64
-            runs_on: ubuntu-24.04-arm
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
