@@ -50,15 +50,17 @@ jobs:
   build-image:
     name: Build Image (${{ matrix.platform }})
     needs: build-binaries
-    runs-on: ${{ matrix.platform == 'linux/arm64' && (github.event.repository.private && 'ubuntu-latest' || 'ubuntu-24.04-arm') || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: linux/amd64
             arch: amd64
+            runner: ubuntu-latest
           - platform: linux/arm64
             arch: arm64
+            runner: ubuntu-24.04-arm
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
