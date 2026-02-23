@@ -3,7 +3,7 @@ module github.com/vitistack/vitistack-operator
 go 1.26.0
 
 require (
-	github.com/NorskHelsenett/ror v1.13.4
+	github.com/NorskHelsenett/ror v1.14.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.21.0
