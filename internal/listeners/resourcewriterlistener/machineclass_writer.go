@@ -84,20 +84,18 @@ func addMachineClassToVitistackStatus(vitistackObj *unstructured.Unstructured, m
 	}
 
 	// Check if machine class already exists
-	for _, mc := range machineClasses {
-		if mc == machineClassName {
-			vlog.Info("MachineClass already exists in Viti stack status, no update needed",
-				"machineClass: ", machineClassName,
-				"vitistack: ", vitistackName)
-			return
-		}
+	if slices.Contains(machineClasses, machineClassName) {
+		vlog.Info("MachineClass already exists in Viti stack status, no update needed",
+			"machineClass: ", machineClassName,
+			"vitistack: ", vitistackName)
+		return
 	}
 
 	// Add the machine class
 	machineClasses = append(machineClasses, machineClassName)
 
 	// Convert []string to []interface{} for SetNestedField compatibility
-	machineClassesInterface := make([]interface{}, len(machineClasses))
+	machineClassesInterface := make([]any, len(machineClasses))
 	for i, mc := range machineClasses {
 		machineClassesInterface[i] = mc
 	}
@@ -180,7 +178,7 @@ func removeMachineClassFromVitistackStatus(vitistackObj *unstructured.Unstructur
 	machineClasses = slices.Delete(machineClasses, machineClassIndex, machineClassIndex+1)
 
 	// Convert []string to []interface{} for SetNestedField compatibility
-	machineClassesInterface := make([]interface{}, len(machineClasses))
+	machineClassesInterface := make([]any, len(machineClasses))
 	for i, mc := range machineClasses {
 		machineClassesInterface[i] = mc
 	}

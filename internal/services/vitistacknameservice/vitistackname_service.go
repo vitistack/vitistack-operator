@@ -80,14 +80,14 @@ func extractConfigDataFromCache(cachedDataStr string) (map[string]string, error)
 	}
 
 	// Parse the JSON string into a map
-	var configMapData map[string]interface{}
+	var configMapData map[string]any
 	err := json.Unmarshal([]byte(cachedDataStr), &configMapData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cache data: %w", err)
 	}
 
 	// Extract the data field which contains our configmap values
-	data, ok := configMapData["data"].(map[string]interface{})
+	data, ok := configMapData["data"].(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("invalid cache data structure")
 	}

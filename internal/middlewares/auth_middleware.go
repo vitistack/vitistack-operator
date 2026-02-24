@@ -32,8 +32,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 // extractToken extracts the token from the Authorization header.
 func extractToken(r *http.Request) string {
 	bearerToken := r.Header.Get("Authorization")
-	if strings.HasPrefix(bearerToken, "Bearer ") {
-		return strings.TrimPrefix(bearerToken, "Bearer ")
+	if after, ok := strings.CutPrefix(bearerToken, "Bearer "); ok {
+		return after
 	}
 	return ""
 }

@@ -86,12 +86,12 @@ func getOrCreateVitistackCrd(name string) (*unstructured.Unstructured, error) {
 
 	// Initialize empty status with empty lists for providers, machineClasses, and clusters
 	status := map[string]any{
-		"kubernetesProviders":     []interface{}{},
-		"machineProviders":        []interface{}{},
-		"machineClasses":          []interface{}{},
-		"clusters":                []interface{}{},
-		"providerStatuses":        []interface{}{},
-		"conditions":              []interface{}{},
+		"kubernetesProviders":     []any{},
+		"machineProviders":        []any{},
+		"machineClasses":          []any{},
+		"clusters":                []any{},
+		"providerStatuses":        []any{},
+		"conditions":              []any{},
 		"kubernetesProviderCount": int64(0),
 		"machineProviderCount":    int64(0),
 		"activeClusters":          int64(0),

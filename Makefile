@@ -168,6 +168,10 @@ vet: check-go ## Run go vet
 	@echo "${YELLOW}Running go vet...${RESET}"
 	${GO} vet ./...
 
+fix: check-go ## Run go fix against code
+	@echo "${YELLOW}Running go fix...${RESET}"
+	${GO} fix ./...
+
 	
 ##@ Development
 .PHONY: run 

@@ -54,17 +54,17 @@ func (m *mockCacheLayer) Remove(ctx context.Context, key string) bool {
 }
 
 type MockCache struct {
-	data map[string]interface{}
+	data map[string]any
 	mu   sync.RWMutex
 }
 
 func NewMockCache() *MockCache {
 	return &MockCache{
-		data: make(map[string]interface{}),
+		data: make(map[string]any),
 	}
 }
 
-func (m *MockCache) Get(ctx context.Context, key string) (interface{}, error) {
+func (m *MockCache) Get(ctx context.Context, key string) (any, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if value, exists := m.data[key]; exists {
@@ -73,7 +73,7 @@ func (m *MockCache) Get(ctx context.Context, key string) (interface{}, error) {
 	return nil, errors.New("key not found")
 }
 
-func (m *MockCache) Set(ctx context.Context, key string, value interface{}) error {
+func (m *MockCache) Set(ctx context.Context, key string, value any) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.data[key] = value

@@ -47,22 +47,22 @@ func getProviderCountField(providerType string) string {
 func initializeStatusDefaults(status map[string]any) {
 	// Initialize empty lists if not present
 	if _, exists := status["kubernetesProviders"]; !exists {
-		status["kubernetesProviders"] = []interface{}{}
+		status["kubernetesProviders"] = []any{}
 	}
 	if _, exists := status["machineProviders"]; !exists {
-		status["machineProviders"] = []interface{}{}
+		status["machineProviders"] = []any{}
 	}
 	if _, exists := status["machineClasses"]; !exists {
-		status["machineClasses"] = []interface{}{}
+		status["machineClasses"] = []any{}
 	}
 	if _, exists := status["clusters"]; !exists {
-		status["clusters"] = []interface{}{}
+		status["clusters"] = []any{}
 	}
 	if _, exists := status["providerStatuses"]; !exists {
-		status["providerStatuses"] = []interface{}{}
+		status["providerStatuses"] = []any{}
 	}
 	if _, exists := status["conditions"]; !exists {
-		status["conditions"] = []interface{}{}
+		status["conditions"] = []any{}
 	}
 
 	// Initialize counts to 0 if not present
