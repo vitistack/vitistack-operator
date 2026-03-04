@@ -4,36 +4,38 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	"github.com/NorskHelsenett/ror/pkg/helpers/kvcachehelper"
 )
 
 // Mock implementation for testing
 func NewMockVitistackCache() *VitistackCache {
 	mockCache := &VitistackCache{}
 	mockCache.cacheLayer = &mockCacheLayer{
-		data: make(map[string]string),
+		data: make(map[string]any),
 	}
 	return mockCache
 }
 
 type mockCacheLayer struct {
-	data map[string]string
+	data map[string]any
 	mu   sync.RWMutex
 }
 
-func (m *mockCacheLayer) Get(ctx context.Context, key string) (string, bool) {
+func (m *mockCacheLayer) Get(ctx context.Context, key string, opts ...kvcachehelper.CacheGetOptions) (any, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	value, exists := m.data[key]
 	return value, exists
 }
 
-func (m *mockCacheLayer) Set(ctx context.Context, key string, value string) {
+func (m *mockCacheLayer) Set(ctx context.Context, key string, value any, opts ...kvcachehelper.CacheSetOptions) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.data[key] = value
 }
 
-func (m *mockCacheLayer) Keys(ctx context.Context) ([]string, error) {
+func (m *mockCacheLayer) Keys(ctx context.Context, opts ...kvcachehelper.CacheKeysOptions) ([]string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	keys := make([]string, 0, len(m.data))
@@ -43,7 +45,7 @@ func (m *mockCacheLayer) Keys(ctx context.Context) ([]string, error) {
 	return keys, nil
 }
 
-func (m *mockCacheLayer) Remove(ctx context.Context, key string) bool {
+func (m *mockCacheLayer) Remove(ctx context.Context, key string, opts ...kvcachehelper.CacheRemoveOptions) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if _, exists := m.data[key]; exists {

@@ -27,7 +27,14 @@ func (dccache VitistackCache) NewVitistackCache() (*VitistackCache, error) {
 
 func (dccache VitistackCache) Get(ctx context.Context, key string) (string, error) {
 	value, _ := dccache.cacheLayer.Get(ctx, key)
-	return value, nil
+	if value == nil {
+		return "", nil
+	}
+	s, ok := value.(string)
+	if !ok {
+		return "", errors.New("cached value is not a string")
+	}
+	return s, nil
 }
 
 func (dccache VitistackCache) Set(ctx context.Context, key string, value any) error {
@@ -63,5 +70,12 @@ func (dccache VitistackCache) GetByKey(ctx context.Context, key string) (string,
 	if !ok {
 		return "", errors.New("key not found")
 	}
-	return value, nil
+	if value == nil {
+		return "", nil
+	}
+	s, ok := value.(string)
+	if !ok {
+		return "", errors.New("cached value is not a string")
+	}
+	return s, nil
 }
