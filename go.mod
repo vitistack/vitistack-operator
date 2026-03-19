@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.21.0
-	github.com/vitistack/common v0.8.48
+	github.com/vitistack/common v0.8.49
 	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.35.2
 	k8s.io/apimachinery v0.35.2
@@ -71,7 +71,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
+	k8s.io/kube-openapi v0.0.0-20260319004828-5883c5ee87b9 // indirect
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	sigs.k8s.io/controller-runtime v0.23.3 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
