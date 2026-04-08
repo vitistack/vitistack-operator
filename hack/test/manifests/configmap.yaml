@@ -4,9 +4,9 @@ metadata:
   name: vitistack-config
 data:
   # Required configuration keys for the vitistack-operator
-  name: "test-stack"
-  description: "Testing viti stack"
-  region: "test-region"
-  country: "test-country"
-  zone: "test-zone"
+  name: "vitistack"
+  description: "Testing vitistack"
+  region: "centraltest"
+  country: "no"
+  zone: "az1"
   infrastructure: "test"
