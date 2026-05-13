@@ -29,9 +29,9 @@ func Start() {
 	server := &http.Server{
 		Handler:      router,
 		Addr:         url,
-		ReadTimeout:  20 * time.Millisecond,
-		WriteTimeout: 20 * time.Millisecond,
+		ReadTimeout:  20 * time.Second,
+		WriteTimeout: 20 * time.Second,
 	}
-	vlog.Info(fmt.Sprintf("Starting server on port localhost:%s", port))
+	vlog.Info(fmt.Sprintf("Starting server on %s", url))
 	vlog.Fatal("Http server stopped", server.ListenAndServe())
 }
