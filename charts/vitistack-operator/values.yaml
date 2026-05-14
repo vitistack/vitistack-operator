@@ -78,20 +78,28 @@ ingress:
 
 resources:
   limits:
-    cpu: 500m
-    memory: 1Gi
+    cpu: 2000m
+    memory: 2Gi
   requests:
-    cpu: 400m
-    memory: 512Mi
+    cpu: 1000m
+    memory: 1Gi
 
 livenessProbe:
   httpGet:
     path: /health
     port: 9991
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
 readinessProbe:
   httpGet:
     path: /health
     port: 9991
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
 
 autoscaling:
   enabled: false

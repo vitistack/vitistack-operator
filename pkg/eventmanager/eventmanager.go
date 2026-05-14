@@ -64,7 +64,14 @@ func (em *EventManager) SubscribeAll(eventHandler EventHandler) {
 	vlog.Info("Subscribed handler for all resource events")
 }
 
-// Publish notifies all registered handlers of a resource event
+// Publish notifies all registered handlers of a resource event.
+//
+// Handlers are invoked synchronously. They must NOT be dispatched on a fresh
+// goroutine per event: informers replay every existing object as an ADD event
+// on startup, so a goroutine-per-event model spawns hundreds of concurrent
+// handlers at once (e.g. one per Machine), each allocating its own working set.
+// On large clusters that overruns the memory limit and the pod is OOMKilled.
+// Synchronous dispatch bounds concurrency to one handler per informer goroutine.
 func (em *EventManager) Publish(event ResourceEvent) {
 	em.mutex.RLock()
 	defer em.mutex.RUnlock()
@@ -79,34 +86,28 @@ func (em *EventManager) Publish(event ResourceEvent) {
 	// Notify specific handlers for this resource kind
 	if handlers, exists := em.handlers[resourceKind]; exists {
 		for _, handler := range handlers {
-			go func(h EventHandler) {
-				defer func() {
-					if r := recover(); r != nil {
-						vlog.Error("Panic in event handler",
-							fmt.Errorf("%v", r),
-							"kind", resourceKind,
-							"stack", string(debug.Stack()))
-					}
-				}()
-				h(event)
-			}(handler)
+			safeInvoke(handler, event, resourceKind, "event handler")
 		}
 	}
 
 	// Notify global handlers
 	for _, handler := range em.globalHandlers {
-		go func(h EventHandler) {
-			defer func() {
-				if r := recover(); r != nil {
-					vlog.Error("Panic in global event handler",
-						fmt.Errorf("%v", r),
-						"kind", resourceKind,
-						"stack", string(debug.Stack()))
-				}
-			}()
-			h(event)
-		}(handler)
+		safeInvoke(handler, event, resourceKind, "global event handler")
 	}
+}
+
+// safeInvoke runs a single handler synchronously, recovering from panics so one
+// faulty handler cannot crash the process or stop sibling handlers from running.
+func safeInvoke(h EventHandler, event ResourceEvent, resourceKind, label string) {
+	defer func() {
+		if r := recover(); r != nil {
+			vlog.Error("Panic in "+label,
+				fmt.Errorf("%v", r),
+				"kind", resourceKind,
+				"stack", string(debug.Stack()))
+		}
+	}()
+	h(event)
 }
 
 // Global event manager instance
