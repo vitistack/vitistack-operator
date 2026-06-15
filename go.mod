@@ -3,15 +3,15 @@ module github.com/vitistack/vitistack-operator
 go 1.26.4
 
 require (
-	github.com/NorskHelsenett/ror v1.19.1
+	github.com/NorskHelsenett/ror v1.19.4
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.21.0
 	github.com/vitistack/common v0.8.70
 	go.uber.org/automaxprocs v1.6.0
-	k8s.io/api v0.36.1
-	k8s.io/apimachinery v0.36.1
-	k8s.io/client-go v0.36.1
+	k8s.io/api v0.36.2
+	k8s.io/apimachinery v0.36.2
+	k8s.io/client-go v0.36.2
 )
 
 require (
