@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -64,7 +64,7 @@ jobs:
             runner: ubuntu-24.04-arm
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download binaries
         uses: actions/download-artifact@v8
@@ -130,7 +130,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Helm
         uses: azure/setup-helm@v5.0.0
@@ -237,7 +237,7 @@ jobs:
         run: cosign sign --yes ${{ env.HELM_REGISTRY }}/vitistack-operator:${{ needs.package-helm.outputs.version }}
 
       - name: Checkout code for Makefile
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Generate container SBOM
         run: make sbom-container IMG=${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} SBOM_OUTPUT_DIR=.
