@@ -1,7 +1,7 @@
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=
 github.com/Masterminds/semver/v3 v3.4.0/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
-github.com/NorskHelsenett/ror v1.20.1 h1:eHNZTjvh4Pp2GJgMMH3tEgDhj7/hisGcEqppWGjbu3c=
-github.com/NorskHelsenett/ror v1.20.1/go.mod h1:jjFjxUe+X0Hf3yFTek5dj40JngVKEFskQZ1P5j7r4Bo=
+github.com/NorskHelsenett/ror v1.20.5 h1:MHbQU0q5+7v0tSXeOymscCIl9djtmEtLmLR5kDwTnXE=
+github.com/NorskHelsenett/ror v1.20.5/go.mod h1:jjFjxUe+X0Hf3yFTek5dj40JngVKEFskQZ1P5j7r4Bo=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
