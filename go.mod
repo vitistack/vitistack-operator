@@ -9,9 +9,9 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/vitistack/common v0.8.71
 	go.uber.org/automaxprocs v1.6.0
-	k8s.io/api v0.36.3
-	k8s.io/apimachinery v0.36.3
-	k8s.io/client-go v0.36.3
+	k8s.io/api v0.36.4
+	k8s.io/apimachinery v0.36.4
+	k8s.io/client-go v0.36.4
 )
 
 require (
