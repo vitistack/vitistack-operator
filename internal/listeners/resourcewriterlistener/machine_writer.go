@@ -2,6 +2,8 @@ package resourcewriterlistener
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/spf13/viper"
 	"github.com/vitistack/common/pkg/clients/k8sclient"
@@ -12,25 +14,59 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+// machineCountDebounce is how long a recount waits after a Machine ADD/DELETE, so a burst
+// of events shares one LIST. On startup the informer replays every existing Machine as an
+// ADD, and a LIST of all machines per event is O(n²) work.
+var machineCountDebounce = 5 * time.Second
+
+var (
+	startMachineCounter sync.Once
+	// machineCountRequested holds at most one pending recount request
+	machineCountRequested = make(chan struct{}, 1)
+)
+
 // handleMachineEvents processes events for Machine resources
 func handleMachineEvents(event eventmanager.ResourceEvent) {
 	if event.Resource == nil {
 		vlog.Error("Resource is nil in Machine event", nil)
 		return
 	}
-	updateVitistackStatusWithMachine(event)
-}
-
-// updateVitistackStatusWithMachine handles updating the Vitistack CRD status with machine count
-func updateVitistackStatusWithMachine(event eventmanager.ResourceEvent) {
-	// Use the shared dynamic client
-	if k8sclient.DynamicClient == nil {
-		vlog.Error("Dynamic client is not initialized", nil)
-		return
-	}
 
 	// Only update count on Add or Delete events
 	if event.Type != eventmanager.EventAdd && event.Type != eventmanager.EventDelete {
+		return
+	}
+
+	requestMachineCount()
+}
+
+// requestMachineCount schedules a recount without blocking the informer. A request made
+// while another is still pending is merged into it.
+func requestMachineCount() {
+	startMachineCounter.Do(func() { go runMachineCounter() })
+	select {
+	case machineCountRequested <- struct{}{}:
+	default:
+	}
+}
+
+func runMachineCounter() {
+	for range machineCountRequested {
+		time.Sleep(machineCountDebounce)
+		// Requests made while waiting are covered by the recount below
+		select {
+		case <-machineCountRequested:
+		default:
+		}
+		updateVitistackStatusWithMachineCount()
+	}
+}
+
+// updateVitistackStatusWithMachineCount handles updating the Vitistack CRD status with machine count
+func updateVitistackStatusWithMachineCount() {
+	// Use the shared dynamic client
+	if k8sclient.DynamicClient == nil {
+		vlog.Error("Dynamic client is not initialized", nil)
 		return
 	}
 

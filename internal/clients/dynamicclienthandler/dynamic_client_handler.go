@@ -3,6 +3,7 @@ package dynamicclienthandler
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/vitistack/common/pkg/loggers/vlog"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -74,10 +75,15 @@ func (c *DynamicWatcher) Run(stop <-chan struct{}) {
 	<-stop
 }
 
+// resyncPeriod makes the informers periodically redeliver every cached object as an
+// update, so a status write that failed, or an update skipped as a no-op, converges
+// without waiting for the next real change or a restart.
+const resyncPeriod = 10 * time.Minute
+
 // Function creates a new dynamic controller to listen for api-changes in provided GroupVersionResource
 func newDynamicWatcher(dynamichandler DynamicClientHandler, client dynamic.Interface, resource schema.GroupVersionResource) *DynamicWatcher {
 	dynWatcher := &DynamicWatcher{}
-	dynInformer := dynamicinformer.NewDynamicSharedInformerFactory(client, 0)
+	dynInformer := dynamicinformer.NewDynamicSharedInformerFactory(client, resyncPeriod)
 	informer := dynInformer.ForResource(resource).Informer()
 
 	dynWatcher.client = client

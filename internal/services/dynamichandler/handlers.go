@@ -98,7 +98,7 @@ func (handler) DeleteResource(obj any) {
 	})
 }
 
-func (handler) UpdateResource(_ any, obj any) {
+func (handler) UpdateResource(oldObj any, obj any) {
 	if obj == nil {
 		vlog.Error("UpdateResource called with nil object", nil)
 		return
@@ -108,6 +108,8 @@ func (handler) UpdateResource(_ any, obj any) {
 		vlog.Error("UpdateResource: failed to cast object to Unstructured", nil)
 		return
 	}
+	// Passed on so subscribers can skip updates that change nothing they track
+	oldUnstructuredObject, _ := oldObj.(*unstructured.Unstructured)
 
 	// Determine cache key based on resource kind
 	cacheKey := string(unstructuredObject.GetUID())
@@ -126,7 +128,8 @@ func (handler) UpdateResource(_ any, obj any) {
 
 	// Publish event to notify subscribers
 	eventmanager.EventBus.Publish(eventmanager.ResourceEvent{
-		Type:     eventmanager.EventUpdate,
-		Resource: unstructuredObject,
+		Type:        eventmanager.EventUpdate,
+		Resource:    unstructuredObject,
+		OldResource: oldUnstructuredObject,
 	})
 }

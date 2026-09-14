@@ -31,6 +31,13 @@ func updateVitistackStatusWithCluster(event eventmanager.ResourceEvent) {
 		return
 	}
 
+	// Checked before any API call: the talos-operator rewrites every cluster's status every
+	// few seconds, and spending API round trips on each of those lets the informer's
+	// unbounded notification queue grow until the pod is OOMKilled.
+	if isNoOpClusterUpdate(event) {
+		return
+	}
+
 	clusterName := event.Resource.GetName()
 
 	// Get or create the vitistack CRD
@@ -43,7 +50,7 @@ func updateVitistackStatusWithCluster(event eventmanager.ResourceEvent) {
 	}
 
 	// Extract cluster metadata from the event resource
-	clusterMetadata := extractClusterMetadata(event)
+	clusterMetadata := extractClusterMetadata(event.Resource)
 
 	// Handle based on event type
 	switch event.Type {
@@ -54,32 +61,45 @@ func updateVitistackStatusWithCluster(event eventmanager.ResourceEvent) {
 	}
 }
 
+// isNoOpClusterUpdate reports whether event moves the cluster to a new resourceVersion
+// without changing any metadata tracked in the Viti stack status. Informer resyncs
+// redeliver the same resourceVersion and are not no-ops, so they still reconcile.
+func isNoOpClusterUpdate(event eventmanager.ResourceEvent) bool {
+	if event.Type != eventmanager.EventUpdate || event.OldResource == nil {
+		return false
+	}
+	if event.OldResource.GetResourceVersion() == event.Resource.GetResourceVersion() {
+		return false
+	}
+	return clusterMetadataEqual(extractClusterMetadata(event.OldResource), extractClusterMetadata(event.Resource))
+}
+
 // extractClusterMetadata extracts metadata from the cluster resource for status
-func extractClusterMetadata(event eventmanager.ResourceEvent) map[string]any {
+func extractClusterMetadata(cluster *unstructured.Unstructured) map[string]any {
 	metadata := map[string]any{
-		"name":         event.Resource.GetName(),
-		"namespace":    event.Resource.GetNamespace(),
+		"name":         cluster.GetName(),
+		"namespace":    cluster.GetNamespace(),
 		"discoveredAt": time.Now().UTC().Format(time.RFC3339),
 	}
 
 	// Try to extract version from spec
-	if version, found, err := unstructured.NestedString(event.Resource.Object, "spec", "version"); err == nil && found {
+	if version, found, err := unstructured.NestedString(cluster.Object, "spec", "version"); err == nil && found {
 		metadata["version"] = version
 	}
 
 	// Try to extract phase from status
-	if phase, found, err := unstructured.NestedString(event.Resource.Object, "status", "phase"); err == nil && found {
+	if phase, found, err := unstructured.NestedString(cluster.Object, "status", "phase"); err == nil && found {
 		metadata["phase"] = phase
 		metadata["ready"] = phase == "Running"
 	}
 
 	// Try to extract control plane replicas from spec.topology.controlplane.replicas
-	if replicas, found, err := unstructured.NestedInt64(event.Resource.Object, "spec", "topology", "controlplane", "replicas"); err == nil && found {
+	if replicas, found, err := unstructured.NestedInt64(cluster.Object, "spec", "topology", "controlplane", "replicas"); err == nil && found {
 		metadata["controlPlaneReplicas"] = replicas
 	}
 
 	// Try to extract worker replicas - sum from spec.topology.workers
-	workers, found, err := unstructured.NestedSlice(event.Resource.Object, "spec", "topology", "workers")
+	workers, found, err := unstructured.NestedSlice(cluster.Object, "spec", "topology", "workers")
 	if err == nil && found {
 		var totalWorkerReplicas int64
 		for _, worker := range workers {

@@ -23,6 +23,8 @@ const (
 type ResourceEvent struct {
 	Type     EventType
 	Resource *unstructured.Unstructured
+	// OldResource is the previous version of Resource. Only set for EventUpdate.
+	OldResource *unstructured.Unstructured
 }
 
 // EventHandler is a function that handles resource events
