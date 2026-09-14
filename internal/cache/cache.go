@@ -5,28 +5,34 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
-
-	"github.com/NorskHelsenett/ror/pkg/helpers/kvcachehelper"
-	"github.com/NorskHelsenett/ror/pkg/helpers/kvcachehelper/memorycache"
 )
+
+// entryTTL is how long a cached value lives after it was last set
+const entryTTL = 6 * time.Hour
 
 var Cache *VitistackCache
 
+// storage is the key/value layer behind VitistackCache
+type storage interface {
+	Get(key string) (any, bool)
+	Set(key string, value any)
+	Keys() []string
+	Remove(key string)
+}
+
 type VitistackCache struct {
-	cacheLayer kvcachehelper.CacheInterface
+	cacheLayer storage
 }
 
 func (dccache VitistackCache) NewVitistackCache() (*VitistackCache, error) {
 	dccache = VitistackCache{
-		cacheLayer: memorycache.NewKvCache(kvcachehelper.CacheOptions{
-			Timeout: time.Hour * 6,
-		}),
+		cacheLayer: newMemoryStore(entryTTL),
 	}
 	return &dccache, nil
 }
 
 func (dccache VitistackCache) Get(ctx context.Context, key string) (string, error) {
-	value, _ := dccache.cacheLayer.Get(ctx, key)
+	value, _ := dccache.cacheLayer.Get(key)
 	if value == nil {
 		return "", nil
 	}
@@ -42,23 +48,18 @@ func (dccache VitistackCache) Set(ctx context.Context, key string, value any) er
 	if err != nil {
 		return err
 	}
-	dccache.cacheLayer.Set(ctx, key, string(stringvalue))
+	dccache.cacheLayer.Set(key, string(stringvalue))
 	return nil
 }
 
+// Delete removes key from the cache. Deleting a missing key is not an error.
 func (dccache VitistackCache) Delete(ctx context.Context, key string) error {
-	ok := dccache.cacheLayer.Remove(ctx, key)
-	if !ok {
-		return errors.New("could not delete key")
-	}
+	dccache.cacheLayer.Remove(key)
 	return nil
 }
 
 func (dccache VitistackCache) Keys(ctx context.Context) ([]string, error) {
-	keys, err := dccache.cacheLayer.Keys(ctx)
-	if err != nil {
-		return nil, err
-	}
+	keys := dccache.cacheLayer.Keys()
 	if len(keys) == 0 {
 		return nil, errors.New("no keys found")
 	}
@@ -66,7 +67,7 @@ func (dccache VitistackCache) Keys(ctx context.Context) ([]string, error) {
 }
 
 func (dccache VitistackCache) GetByKey(ctx context.Context, key string) (string, error) {
-	value, ok := dccache.cacheLayer.Get(ctx, key)
+	value, ok := dccache.cacheLayer.Get(key)
 	if !ok {
 		return "", errors.New("key not found")
 	}

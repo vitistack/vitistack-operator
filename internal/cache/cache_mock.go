@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-
-	"github.com/NorskHelsenett/ror/pkg/helpers/kvcachehelper"
 )
 
 // Mock implementation for testing
@@ -22,37 +20,33 @@ type mockCacheLayer struct {
 	mu   sync.RWMutex
 }
 
-func (m *mockCacheLayer) Get(ctx context.Context, key string, opts ...kvcachehelper.CacheGetOptions) (any, bool) {
+func (m *mockCacheLayer) Get(key string) (any, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	value, exists := m.data[key]
 	return value, exists
 }
 
-func (m *mockCacheLayer) Set(ctx context.Context, key string, value any, opts ...kvcachehelper.CacheSetOptions) {
+func (m *mockCacheLayer) Set(key string, value any) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.data[key] = value
 }
 
-func (m *mockCacheLayer) Keys(ctx context.Context, opts ...kvcachehelper.CacheKeysOptions) ([]string, error) {
+func (m *mockCacheLayer) Keys() []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	keys := make([]string, 0, len(m.data))
 	for key := range m.data {
 		keys = append(keys, key)
 	}
-	return keys, nil
+	return keys
 }
 
-func (m *mockCacheLayer) Remove(ctx context.Context, key string, opts ...kvcachehelper.CacheRemoveOptions) bool {
+func (m *mockCacheLayer) Remove(key string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if _, exists := m.data[key]; exists {
-		delete(m.data, key)
-		return true
-	}
-	return false
+	delete(m.data, key)
 }
 
 type MockCache struct {
