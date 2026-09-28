@@ -9,7 +9,7 @@ require (
 	github.com/vitistack/common v0.8.71
 	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.37.0
-	k8s.io/apimachinery v0.37.0
+	k8s.io/apimachinery v0.37.1
 	k8s.io/client-go v0.37.0
 )
 
